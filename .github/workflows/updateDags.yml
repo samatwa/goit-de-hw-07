@@ -25,7 +25,11 @@ jobs:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
     - name: Copy files via SCP
-      run: scp -r ./* $SERVER_USER@$SERVER_IP:/root/airflow-docker/dags
+      run: |
+        echo "${{secrets.SSH_PRIVATE_KEY}}" > key.pem
+        chmod 600 key.pem
+        mkdir -p $HOME/.ssh && ssh-keyscan -H $SERVER_IP >> $HOME/.ssh/known_hosts
+        scp -r ./* $SERVER_USER@$SERVER_IP:/root/airflow-docker/dags
       env:
         SSH_AUTH_SOCK: ${{ secrets.SSH_AUTH_SOCK }}
       
