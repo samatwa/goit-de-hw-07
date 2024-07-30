@@ -1,0 +1,33 @@
+name: update DAGs airflow
+
+on:
+    push:
+        branches:
+          - main
+
+jobs:
+  update-dags:
+    runs-on: ubuntu-latest
+# оголошуємо всі змінні 
+    env:
+        #глобальні змінні організації
+        SERVER_IP: ${{secrets.SERVER_IP}}
+        SERVER_USER: ${{secrets.SERVER_USER}}
+        SSH_PRIVATE_KEY: ${{secrets.SSH_PRIVATE_KEY}}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up SSH
+      uses: webfactory/ssh-agent@v0.5.3
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    - name: Copy files via SCP
+      run: scp -r ./* $SERVER_USER@$SERVER_IP:/root/airflow-docker/dags
+      env:
+        SSH_AUTH_SOCK: ${{ secrets.SSH_AUTH_SOCK }}
+      
+  
+        
