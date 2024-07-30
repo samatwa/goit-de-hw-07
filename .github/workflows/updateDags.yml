@@ -24,7 +24,7 @@ jobs:
         echo "${{secrets.SSH_PRIVATE_KEY}}" > key.pem
         chmod 600 key.pem
         mkdir -p $HOME/.ssh && ssh-keyscan -H $SERVER_IP >> $HOME/.ssh/known_hosts
-        rsync -rav -e "ssh -i key.pem" --delete-after ./ $SERVER_USER@$SERVER_IP:/airflow-docker/dags
+        rsync -rav -e "ssh -i key.pem" --delete-after ./ $SERVER_USER@$SERVER_IP:/root/airflow-docker/dags
     
       
   
