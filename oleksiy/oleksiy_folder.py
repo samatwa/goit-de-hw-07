@@ -10,7 +10,7 @@ default_args = {
 }
 
 # Instantiate your DAG
-dag = DAG ('oleksiy_sample_dag', default_args=default_args, schedule_interval=None)
+dag = DAG ('oleksiy_folder_dag', default_args=default_args, schedule_interval=None, tags=["oleksiy"])
 
 # Define tasks
 def task1():
