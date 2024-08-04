@@ -1,6 +1,5 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator, BranchPythonOperator
-from airflow.operators.empty import EmptyOperator
 from airflow.utils.trigger_rule import TriggerRule as tr
 from datetime import datetime
 import random
@@ -17,7 +16,7 @@ def generate_number(ti):
 # Функція для перевірки парності числа
 def check_even_odd(ti):
     number = ti.xcom_pull(task_ids='generate_number')
-    
+
     if number % 2 == 0:
         return 'square_task'
     else:
@@ -45,20 +44,20 @@ def cube_number(ti):
 def final_function(ti):
     original_number = ti.xcom_pull(task_ids='generate_number')
     math_result = ti.xcom_pull(key='math_result')
-    
+
     print(f"Original value {original_number}, math_result {math_result}")
 
 
 # Визначення DAG
 default_args = {
     'owner': 'airflow',
-    'start_date': datetime(2024, 8, 4),
+    'start_date': datetime(2024, 8, 4, 0, 0),
 }
 
 with DAG(
         'even_or_odd_square_or_cube',
         default_args=default_args,
-        schedule_interval=None,
+        schedule_interval='*/10 * * * *',
         catchup=False,
         tags=["oleksiy"]
 ) as dag:
