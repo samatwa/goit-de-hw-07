@@ -11,15 +11,13 @@ def generate_number(ti):
     number = random.randint(1, 100)
     print(f"Generated number: {number}")
 
-    # Записуємо деяке повідомлення в XCom під певним ключем
-    ti.xcom_push(key='secret_message', value="Good job!")
-
     return number
 
 
 # Функція для перевірки парності числа
 def check_even_odd(ti):
     number = ti.xcom_pull(task_ids='generate_number')
+    
     if number % 2 == 0:
         return 'square_task'
     else:
@@ -30,6 +28,8 @@ def check_even_odd(ti):
 def square_number(ti):
     number = ti.xcom_pull(task_ids='generate_number')
     result = number ** 2
+
+    ti.xcom_push(key='math_result', value=result)
     print(f"{number} squared is {result}")
 
 
@@ -37,12 +37,16 @@ def square_number(ti):
 def cube_number(ti):
     number = ti.xcom_pull(task_ids='generate_number')
     result = number ** 3
+
+    ti.xcom_push(key='math_result', value=result)
     print(f"{number} cubed is {result}")
 
 
 def final_function(ti):
-    secret_message = ti.xcom_pull(key='secret_message')
-    print(secret_message)
+    original_number = ti.xcom_pull(task_ids='generate_number')
+    math_result = ti.xcom_pull(key='math_result')
+    
+    print(f"Original value {original_number}, math_result {math_result}")
 
 
 # Визначення DAG
