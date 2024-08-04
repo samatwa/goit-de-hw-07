@@ -5,10 +5,15 @@ from airflow.utils.trigger_rule import TriggerRule as tr
 from datetime import datetime
 import random
 
+
 # Функція для генерації випадкового числа
-def generate_number():
+def generate_number(ti):
     number = random.randint(1, 100)
     print(f"Generated number: {number}")
+
+    # Записуємо деяке повідомлення в XCom під певним ключем
+    ti.xcom_push(key='secret_message', value="Good job!")
+
     return number
 
 
@@ -33,6 +38,11 @@ def cube_number(ti):
     number = ti.xcom_pull(task_ids='generate_number')
     result = number ** 3
     print(f"{number} cubed is {result}")
+
+
+def final_function(ti):
+    secret_message = ti.xcom_pull(key='secret_message')
+    print(secret_message)
 
 
 # Визначення DAG
@@ -68,8 +78,9 @@ with DAG(
         python_callable=cube_number,
     )
 
-    end_task = EmptyOperator(
+    end_task = PythonOperator(
         task_id='end_task',
+        python_callable=final_function,
         trigger_rule=tr.ONE_SUCCESS
     )
 
