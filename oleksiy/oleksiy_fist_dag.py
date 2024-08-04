@@ -6,7 +6,7 @@ import random
 
 
 # Функція для генерації випадкового числа
-def generate_number(ti):dd
+def generate_number(ti):
     number = random.randint(1, 100)
     print(f"Generated number: {number}")
 
