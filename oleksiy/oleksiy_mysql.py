@@ -4,7 +4,7 @@ from airflow.sensors.sql import SqlSensor
 from airflow.operators.mysql_operator import MySqlOperator
 from airflow.operators.python import PythonOperator
 
-def mark_dag_success(ti, **kwargs)::
+def mark_dag_success(ti, **kwargs):
     # Get the current DagRun object
     dag_run = kwargs['dag_run']
     
