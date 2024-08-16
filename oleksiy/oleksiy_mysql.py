@@ -1,9 +1,8 @@
 from airflow import DAG
-#from airflow.providers.mysql.operators.mysql import MySqlOperator
-#from airflow.providers.mysql.sensors.mysql import MySqlSensor
 from datetime import datetime
 from airflow.sensors.sql import SqlSensor
 from airflow.operators.mysql_operator import MySqlOperator
+from airflow.operators.empty import EmptyOperator
 
 # Визначення DAG
 default_args = {
@@ -79,7 +78,7 @@ with DAG(
         """,
     )
 
-    end = DummyOperator(
+    end = EmptyOperator(
     task_id='end',
     trigger_rule='one_failed',  # Ensures the DAG ends gracefully
     dag=dag,
