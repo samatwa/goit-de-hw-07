@@ -3,6 +3,8 @@ from datetime import datetime
 from airflow.sensors.sql import SqlSensor
 from airflow.operators.mysql_operator import MySqlOperator
 from airflow.operators.python import PythonOperator
+from airflow.utils.trigger_rule import TriggerRule as tr
+from airflow.utils.state import State
 
 def mark_dag_success(ti, **kwargs):
     # Get the current DagRun object
@@ -71,8 +73,8 @@ with DAG(
                CROSS JOIN count_in_original
                ;""",
         mode='poke',  # Режим очікування (poke або reschedule)
-        poke_interval=10,  # Check every 60 seconds
-        timeout=11,  # Timeout after 10 minutes
+        poke_interval=5,  # Check every 60 seconds
+        timeout=6,  # Timeout after 10 minutes
     )
 
     # Завдання для вибору даних з таблиці
@@ -87,7 +89,7 @@ with DAG(
 
     mark_success_task = PythonOperator(
         task_id='mark_success',
-        trigger_rule='one_failed',
+        trigger_rule=tr.ONE_FAILED,
         python_callable=mark_dag_success,
         provide_context=True,
         dag=dag,
