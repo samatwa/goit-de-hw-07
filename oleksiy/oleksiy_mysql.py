@@ -2,7 +2,14 @@ from airflow import DAG
 from datetime import datetime
 from airflow.sensors.sql import SqlSensor
 from airflow.operators.mysql_operator import MySqlOperator
-from airflow.operators.empty import EmptyOperator
+from airflow.operators.python import PythonOperator
+
+def mark_dag_success(context):
+    # Get the current DagRun object
+    dag_run = context['dag_run']
+    
+    # Mark the DagRun as successful
+    dag_run.set_state(State.SUCCESS)
 
 # Визначення DAG
 default_args = {
@@ -78,12 +85,13 @@ with DAG(
         """,
     )
 
-    end = EmptyOperator(
-        task_id='end',
-        trigger_rule='one_failed',  # Ensures the DAG ends gracefully
+    mark_success_task = PythonOperator(
+        task_id='mark_success',
+        python_callable=mark_dag_success,
+        provide_context=True,
         dag=dag,
     )
 
     # Встановлення залежностей
     create_schema >> create_table >> check_for_data >> refresh_data
-    check_for_data >> end
+    check_for_data >> mark_success_task
