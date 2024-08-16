@@ -87,6 +87,7 @@ with DAG(
 
     mark_success_task = PythonOperator(
         task_id='mark_success',
+        trigger_rule='one_failed',
         python_callable=mark_dag_success,
         provide_context=True,
         dag=dag,
