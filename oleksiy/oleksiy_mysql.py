@@ -40,7 +40,7 @@ with DAG(
     )
 
     # Сенсор для перевірки наявності даних у таблиці
-    check_for_data = MySqlSensor(
+    check_for_data = SqlSensor(
         task_id='check_for_data',
         mysql_conn_id=connection_name,
         sql="SELECT COUNT(1) FROM olympic_dataset.athlete_bio;",
