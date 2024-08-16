@@ -61,7 +61,7 @@ with DAG(
                 count_in_original AS (
                 select COUNT(*) nrows_original from olympic_dataset.games
                 )
-               SELECT nrows_copy = nrows_original FROM count_in_copy
+               SELECT nrows_copy <> nrows_original FROM count_in_copy
                CROSS JOIN count_in_original
                ;""",
         mode='poke',  # Режим очікування (poke або reschedule)
