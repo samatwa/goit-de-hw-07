@@ -4,9 +4,9 @@ from airflow.sensors.sql import SqlSensor
 from airflow.operators.mysql_operator import MySqlOperator
 from airflow.operators.python import PythonOperator
 
-def mark_dag_success(context):
+def mark_dag_success(ti, **kwargs)::
     # Get the current DagRun object
-    dag_run = context['dag_run']
+    dag_run = kwargs['dag_run']
     
     # Mark the DagRun as successful
     dag_run.set_state(State.SUCCESS)
