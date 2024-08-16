@@ -1,7 +1,9 @@
 from airflow import DAG
-from airflow.providers.mysql.operators.mysql import MySqlOperator
-from airflow.providers.mysql.sensors.mysql import MySqlSensor
+#from airflow.providers.mysql.operators.mysql import MySqlOperator
+#from airflow.providers.mysql.sensors.mysql import MySqlSensor
 from datetime import datetime
+from airflow.sensors.sql import SqlSensor
+from airflow.operators.mysql_operator import MySqlOperator
 
 # Визначення DAG
 default_args = {
