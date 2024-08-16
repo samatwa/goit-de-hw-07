@@ -7,13 +7,9 @@ from airflow.utils.trigger_rule import TriggerRule as tr
 from airflow.utils.state import State
 
 def mark_dag_success(ti, **kwargs):
-    # Get the current DagRun object
     dag_run = kwargs['dag_run']
-    
-    # Mark the DagRun as successful
     dag_run.set_state(State.SUCCESS)
 
-# Визначення DAG
 default_args = {
     'owner': 'airflow',
     'start_date': datetime(2024, 8, 4, 0, 0),
@@ -29,7 +25,6 @@ with DAG(
         tags=["oleksiy"]
 ) as dag:
 
-    # Завдання для створення таблиці, якщо вона не існує
     create_schema = MySqlOperator(
         task_id='create_schema',
         mysql_conn_id=connection_name,
@@ -38,7 +33,6 @@ with DAG(
         """
     )
 
-    # Завдання для вставки даних в таблицю
     create_table = MySqlOperator(
         task_id='create_table',
         mysql_conn_id=connection_name,
@@ -59,7 +53,7 @@ with DAG(
         """
     )
 
-    # Сенсор для перевірки наявності даних у таблиці
+    # Сенсор для перевірки рівності кількості строк в обох таблицях
     check_for_data = SqlSensor(
         task_id='check_if_couns_same',
         conn_id=connection_name,
@@ -73,11 +67,10 @@ with DAG(
                CROSS JOIN count_in_original
                ;""",
         mode='poke',  # Режим очікування (poke або reschedule)
-        poke_interval=5,  # Check every 60 seconds
-        timeout=6,  # Timeout after 10 minutes
+        poke_interval=5,  # Check every 5 seconds
+        timeout=6,  # Timeout after 6 seconds (1 retry)
     )
 
-    # Завдання для вибору даних з таблиці
     refresh_data = MySqlOperator(
         task_id='refresh',
         mysql_conn_id=connection_name,
@@ -95,6 +88,5 @@ with DAG(
         dag=dag,
     )
 
-    # Встановлення залежностей
     create_schema >> create_table >> check_for_data >> refresh_data
     check_for_data >> mark_success_task
