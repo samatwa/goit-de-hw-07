@@ -79,10 +79,10 @@ with DAG(
     )
 
     end = EmptyOperator(
-    task_id='end',
-    trigger_rule='one_failed',  # Ensures the DAG ends gracefully
-    dag=dag,
-)
+        task_id='end',
+        trigger_rule='one_failed',  # Ensures the DAG ends gracefully
+        dag=dag,
+    )
 
     # Встановлення залежностей
     create_schema >> create_table >> check_for_data >> refresh_data
