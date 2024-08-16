@@ -12,7 +12,7 @@ default_args = {
 connection_name = "goit_mysql_db"
 
 with DAG(
-        'mysql_operator_sensor_example',
+        'working_with_mysql_db',
         default_args=default_args,
         schedule_interval=None,
         catchup=False,
