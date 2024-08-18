@@ -8,7 +8,7 @@ from airflow.operators.mysql_operator import MySqlOperator
 from airflow.operators.python import PythonOperator, BranchPythonOperator
 from airflow.utils.trigger_rule import TriggerRule as tr
 
-medals = ['Bronze', 'Silver', 'Gold']
+medals = ['Bronze', 'Silver', 'Gold', 'nan']
 
 
 def pick_medal():
@@ -33,7 +33,7 @@ connection_name = "goit_mysql_db"
 
 # Визначення DAG
 with DAG(
-        'olympics_hw',
+        'working_with_mysql_db',
         default_args=default_args,
         schedule_interval=None,
         catchup=False,
@@ -101,7 +101,7 @@ with DAG(
     delay = PythonOperator(
         task_id='generate_number',
         python_callable=add_delay,
-        # trigger_rule=tr.ONE_SUCCESS
+        trigger_rule=tr.ONE_SUCCESS
     )
 
     check_for_correctness = SqlSensor(
