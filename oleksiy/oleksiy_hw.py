@@ -99,7 +99,7 @@ with DAG(
     )
 
     delay = PythonOperator(
-        task_id='generate_number',
+        task_id='generate_delay',
         python_callable=add_delay,
         trigger_rule=tr.ONE_SUCCESS
     )
