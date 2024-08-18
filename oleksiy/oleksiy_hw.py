@@ -33,7 +33,7 @@ connection_name = "goit_mysql_db"
 
 # Визначення DAG
 with DAG(
-        'working_with_mysql_db',
+        'olympics_hw',
         default_args=default_args,
         schedule_interval=None,
         catchup=False,
