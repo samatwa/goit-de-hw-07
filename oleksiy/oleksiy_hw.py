@@ -8,7 +8,7 @@ from airflow.operators.mysql_operator import MySqlOperator
 from airflow.operators.python import PythonOperator, BranchPythonOperator
 from airflow.utils.trigger_rule import TriggerRule as tr
 
-medals = ['Bronze', 'Silver', 'Gold', 'nan']
+medals = ['Bronze', 'Silver', 'Gold']
 
 
 def pick_medal():
