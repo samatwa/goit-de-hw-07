@@ -21,7 +21,7 @@ def pick_medal_func(ti):
 
 
 def add_delay():
-    time.sleep(1)
+    time.sleep(31)
 
 
 default_args = {
