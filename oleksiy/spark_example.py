@@ -24,7 +24,7 @@ dag = DAG(
 
 # Define the SparkSubmitOperator
 spark_submit_task = SparkSubmitOperator(
-    application='/path/to/example_spark_job.py',  # Path to your Spark job
+    application='./spark_job.py',  # Path to your Spark job
     task_id='spark_submit_job',
     conn_id='spark-default',  # Spark connection ID
     verbose=1,
