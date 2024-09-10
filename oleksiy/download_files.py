@@ -30,8 +30,8 @@ with DAG(
     download_ftp_file = FTPFileTransmitOperator(
             task_id='download_ftp_file',
             ftp_conn_id='sftp_conn',  # Replace with your connection ID
-            local_filepath='neoversity/olympics_dataset/games.csv',  # Replace with the local destination path
-            remote_filepath='.',  # Replace with the path to the file on the FTP server
+            local_filepath='.',  # Replace with the local destination path
+            remote_filepath='neoversity/olympics_dataset/games.csv',  # Replace with the path to the file on the FTP server
             operation='get',  # 'get' operation to download the file
             dag=dag
         )
