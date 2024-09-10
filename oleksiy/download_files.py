@@ -1,5 +1,6 @@
 from airflow import DAG
 from airflow.providers.ftp.operators.ftp import FTPFileTransmitOperator
+from airflow.operators.bash import BashOperator
 from datetime import datetime, timedelta
 
 # Define default_args
@@ -22,6 +23,11 @@ dag = DAG(
     tags=['oleksiy']
 )
 
+list_files_1 = BashOperator(
+        task_id='list_files',  # Unique identifier for the task
+        bash_command='ls -l'   # Bash command to execute
+    )
+
 download_ftp_file = FTPFileTransmitOperator(
         task_id='download_ftp_file',
         ftp_conn_id='sftp_conn',  # Replace with your connection ID
@@ -30,5 +36,10 @@ download_ftp_file = FTPFileTransmitOperator(
         operation='get',  # 'get' operation to download the file
     )
 
+list_files_2 = BashOperator(
+        task_id='list_files',  # Unique identifier for the task
+        bash_command='ls -l'   # Bash command to execute
+    )
+
 # Set task dependencies (if any)
-download_ftp_file
+list_files_1 >> download_ftp_file >> list_files_2
