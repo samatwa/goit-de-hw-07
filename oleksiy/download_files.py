@@ -21,26 +21,26 @@ with DAG(
         tags=["oleksiy"]  # Теги для класифікації DAG
 ) as dag:
 
-list_files_1 = BashOperator(
-        task_id='list_files',  # Unique identifier for the task
-        bash_command='ls -l',   # Bash command to execute
-        dag=dag
-    )
-
-download_ftp_file = FTPFileTransmitOperator(
-        task_id='download_ftp_file',
-        ftp_conn_id='sftp_conn',  # Replace with your connection ID
-        local_filepath='neoversity/olympics_dataset/games.csv',  # Replace with the local destination path
-        remote_filepath='.',  # Replace with the path to the file on the FTP server
-        operation='get',  # 'get' operation to download the file
-        dag=dag
-    )
-
-list_files_2 = BashOperator(
-        task_id='list_files',  # Unique identifier for the task
-        bash_command='ls -l',   # Bash command to execute
-        dag=dag
-    )
-
-# Set task dependencies (if any)
-list_files_1 >> download_ftp_file >> list_files_2
+    list_files_1 = BashOperator(
+            task_id='list_files',  # Unique identifier for the task
+            bash_command='ls -l',   # Bash command to execute
+            dag=dag
+        )
+    
+    download_ftp_file = FTPFileTransmitOperator(
+            task_id='download_ftp_file',
+            ftp_conn_id='sftp_conn',  # Replace with your connection ID
+            local_filepath='neoversity/olympics_dataset/games.csv',  # Replace with the local destination path
+            remote_filepath='.',  # Replace with the path to the file on the FTP server
+            operation='get',  # 'get' operation to download the file
+            dag=dag
+        )
+    
+    list_files_2 = BashOperator(
+            task_id='list_files',  # Unique identifier for the task
+            bash_command='ls -l',   # Bash command to execute
+            dag=dag
+        )
+    
+    # Set task dependencies (if any)
+    list_files_1 >> download_ftp_file >> list_files_2
