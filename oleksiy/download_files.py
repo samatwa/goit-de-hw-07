@@ -22,7 +22,7 @@ with DAG(
 ) as dag:
 
     list_files_1 = BashOperator(
-            task_id='list_files',  # Unique identifier for the task
+            task_id='list_files_1',  # Unique identifier for the task
             bash_command='ls -l',   # Bash command to execute
             dag=dag
         )
@@ -37,7 +37,7 @@ with DAG(
         )
     
     list_files_2 = BashOperator(
-            task_id='list_files',  # Unique identifier for the task
+            task_id='list_files_2',  # Unique identifier for the task
             bash_command='ls -l',   # Bash command to execute
             dag=dag
         )
