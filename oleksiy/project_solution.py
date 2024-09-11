@@ -25,7 +25,7 @@ dag = DAG(
 # Define the SparkSubmitOperator
 landing_to_bronze = SparkSubmitOperator(
     application='dags/oleksiy/landing_to_bronze.py',  # Path to your Spark job
-    task_id='spark_submit_job',
+    task_id='landing_to_bronze',
     conn_id='spark-default',  # Spark connection ID
     verbose=1,
     dag=dag,
@@ -33,7 +33,7 @@ landing_to_bronze = SparkSubmitOperator(
 
 bronze_to_silver = SparkSubmitOperator(
     application='dags/oleksiy/bronze_to_silver.py',  # Path to your Spark job
-    task_id='spark_submit_job',
+    task_id='bronze_to_silver',
     conn_id='spark-default',  # Spark connection ID
     verbose=1,
     dag=dag,
@@ -41,7 +41,7 @@ bronze_to_silver = SparkSubmitOperator(
 
 silver_to_gold = SparkSubmitOperator(
     application='dags/oleksiy/silver_to_gold.py',  # Path to your Spark job
-    task_id='spark_submit_job',
+    task_id='silver_to_gold',
     conn_id='spark-default',  # Spark connection ID
     verbose=1,
     dag=dag,
