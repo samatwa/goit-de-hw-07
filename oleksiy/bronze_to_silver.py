@@ -28,6 +28,8 @@ for table in table_list:
 
     df = df.drop_duplicates()
 
+    df.show()
+
     df.coalesce(1).write \
         .mode('overwrite') \
         .parquet(f"silver/{table}")
