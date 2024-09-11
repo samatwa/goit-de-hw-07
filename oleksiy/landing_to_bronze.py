@@ -30,6 +30,8 @@ for table in table_list:
     print(f"Working on {table} table!")
     df = spark.read.csv(f"{table}.csv", header=True, inferSchema=True)
 
+    df.show()
+
     df.coalesce(1).write \
         .mode('overwrite') \
         .parquet(f"bronze/{table}")
