@@ -28,13 +28,13 @@ with DAG(
         )
     
     download_ftp_file = FTPFileTransmitOperator(
-            task_id='download_ftp_file',
-            ftp_conn_id='sftp_conn',  # Replace with your connection ID
-            local_filepath='.',  # Replace with the local destination path
-            remote_filepath='neoversity/olympics_dataset/games.csv',  # Replace with the path to the file on the FTP server
-            operation='get',  # 'get' operation to download the file
-            dag=dag
-        )
+        task_id='download_games_csv',
+        ftp_conn_id='ftp_conn',  # The connection ID you set up in Airflow UI
+        remote_source_path='/neoversity/olympics_dataset/games.csv',  # Source path on FTP server
+        local_dest_path='/tmp/games.csv',  # Local destination path
+        operation='get',  # 'get' for downloading the file
+        create_intermediate_dirs=True,  # Create intermediate directories if needed
+    )
     
     list_files_2 = BashOperator(
             task_id='list_files_2',  # Unique identifier for the task
