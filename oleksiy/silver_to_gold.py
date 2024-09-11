@@ -18,6 +18,8 @@ event_stream_enriched = athlete_event_results.join(athlete_bio, "athlete_id", "i
 ) \
     .withColumn("timestamp", current_timestamp())
 
+event_stream_enriched.show()
+
 event_stream_enriched.coalesce(1).write \
         .mode('overwrite') \
         .parquet(f"gold/avg_stats")
