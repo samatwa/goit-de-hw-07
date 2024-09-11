@@ -30,8 +30,8 @@ with DAG(
     download_ftp_file = FTPFileTransmitOperator(
         task_id='download_games_csv',
         ftp_conn_id='ftp_conn',  # The connection ID you set up in Airflow UI
-        remote_source_path='/neoversity/olympics_dataset/games.csv',  # Source path on FTP server
-        local_dest_path='/tmp/games.csv',  # Local destination path
+        remote_filepath='/neoversity/olympics_dataset/games.csv',  # Source path on FTP server
+        local_filepath='/tmp/games.csv',  # Local destination path
         operation='get',  # 'get' for downloading the file
         create_intermediate_dirs=True,  # Create intermediate directories if needed
     )
