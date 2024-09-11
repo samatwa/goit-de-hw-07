@@ -23,7 +23,7 @@ with DAG(
 
     list_files_1 = BashOperator(
             task_id='list_files_1',  # Unique identifier for the task
-            bash_command='wget https://ftp.goit.study/neoversity/olympics_dataset/games.csv',   # Bash command to execute
+            bash_command='ls -l',   # Bash command to execute
             dag=dag
         )
     
