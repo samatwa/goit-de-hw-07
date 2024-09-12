@@ -24,7 +24,7 @@ for table in table_list:
     for col_name, col_type in df.dtypes:
         if col_type == 'string':
             print(f"Cleaning column: {col_name}, Type: {col_type}")
-            df = df.withColumn("cleaned_text", clean_text_udf(df[col_name]))
+            df = df.withColumn(col_name, clean_text_udf(df[col_name]))
 
     df = df.drop_duplicates()
 
