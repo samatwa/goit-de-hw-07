@@ -1,5 +1,6 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import avg, current_timestamp
+from pyspark.sql.functions import avg, current_timestamp, col
+from pyspark.sql.types import IntegerType
 
 spark = SparkSession.builder \
     .appName("silver_to_gold") \
@@ -10,7 +11,8 @@ athlete_event_results = spark.read.parquet(f"silver/athlete_event_results", head
 
 event_stream_enriched = athlete_event_results.join(athlete_bio, "athlete_id", "inner") \
     .drop(athlete_bio.country_noc) \
-    .where("weight != 'nan' AND height!= ''") \
+    .withColumn("height", col("height").cast(IntegerType())) \
+    .withColumn("weight", col("weight").cast(IntegerType())) \
     .groupBy("sport", "medal", "sex", "country_noc") \
     .agg(
     avg("height").alias("avg_height"),
@@ -21,7 +23,7 @@ event_stream_enriched = athlete_event_results.join(athlete_bio, "athlete_id", "i
 event_stream_enriched.show()
 
 event_stream_enriched.coalesce(1).write \
-        .mode('overwrite') \
-        .parquet(f"gold/avg_stats")
+    .mode('overwrite') \
+    .parquet(f"gold/avg_stats")
 
 spark.stop()
