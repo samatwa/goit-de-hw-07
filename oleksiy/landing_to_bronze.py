@@ -2,7 +2,7 @@ from pyspark.sql import SparkSession
 
 import requests
 
-table_list = ['games', 'athlete_bio', 'athlete_event_results']
+table_list = ['athlete_bio', 'athlete_event_results']
 
 
 def download_data(local_file_path):
