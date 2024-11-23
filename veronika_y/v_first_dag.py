@@ -55,7 +55,7 @@ default_args = {
 }
 
 with DAG(
-        'even_or_odd_square_or_cube',
+        'even_or_odd_square_or_cube_v',
         default_args=default_args,
         schedule_interval='*/10 * * * *',
         catchup=False,
