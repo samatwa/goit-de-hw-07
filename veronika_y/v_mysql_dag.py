@@ -8,6 +8,7 @@ from airflow.utils.state import State
 
 # Функція для примусового встановлення статусу DAG як успішного
 def mark_dag_success(ti, **kwargs):
+    print(kwargs)
     dag_run = kwargs['dag_run']
     dag_run.set_state(State.SUCCESS)
 
