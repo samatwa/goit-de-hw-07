@@ -3,7 +3,7 @@ name: update DAGs airflow
 on:
     push:
         branches:
-          - main 
+          - devops 
 
 jobs:
   update-dags:
@@ -33,7 +33,7 @@ jobs:
           base=$(basename $file .enc)
           openssl pkeyutl -decrypt -inkey private_key.pem -keyform PEM -in "$file" -out "$base"
         done
-        rsync -rav -e "ssh -i key.pem" --delete-after --exclude "key.pem" --exclude "private_key.pem" ./ $SERVER_USER@$SERVER_IP:/root/airflow-docker/dags
+        rsync -rav -e "ssh -i key.pem" --delete-after --exclude "key.pem" --exclude "private_key.pem" ./ $SERVER_USER@$SERVER_IP:/root/devops
 
       
   
