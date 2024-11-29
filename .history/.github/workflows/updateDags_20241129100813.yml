@@ -14,7 +14,7 @@ jobs:
         SERVER_IP: ${{secrets.SERVER_IP}}
         SERVER_USER: ${{secrets.SERVER_USER}}
         SSH_PRIVATE_KEY: ${{secrets.SSH_PRIVATE_KEY}}
-        DECRYPT_PRIVAT_KEY: ${{secrets.DECRYPT_PRIVAT_KEY}}
+        DECRYPT_PRIVATE_KEY: ${{secrets.DECRYPTE_PRIVAT_KEY}}
 
     steps:
     - name: Checkout code
@@ -23,7 +23,7 @@ jobs:
     - name: Copy files via SCP
       run: |
         echo "${{secrets.SSH_PRIVATE_KEY}}" > key.pem
-        echo "${{secrets.DECRYPT_PRIVAT_KEY}}" > private_key.pem
+        echo "${{secrets.DECRYPT_PRIVATE_KEY}}" > private_key.pem
         chmod 600 key.pem
         chmod 600 privat_key.pem
         mkdir -p $HOME/.ssh && ssh-keyscan -H $SERVER_IP >> $HOME/.ssh/known_hosts
