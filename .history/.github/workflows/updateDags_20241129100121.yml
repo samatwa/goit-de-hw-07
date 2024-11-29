@@ -27,7 +27,6 @@ jobs:
         chmod 600 key.pem
         chmod 600 privat_key.pem
         mkdir -p $HOME/.ssh && ssh-keyscan -H $SERVER_IP >> $HOME/.ssh/known_hosts
-        sudo apt-get update && sudo apt-get install -y openssl
         for file in encrypted_files/*.enc; do
           base=$(basename $file .enc)
           openssl rsautl -decrypt -inkey private_key.pem -in $file -out $base
