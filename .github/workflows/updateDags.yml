@@ -34,7 +34,7 @@ jobs:
           echo "Decrypting $archive..."
           ./decrypt_and_extract.sh "$archive" private_key.pem
         done
-        rsync -rav -e "ssh -i key.pem" --delete-after --exclude "key.pem" --exclude "private_key.pem" ./ $SERVER_USER@$SERVER_IP:/root/airflow-docker/dags
+        rsync -rav -e "ssh -i key.pem" --delete-after --exclude "key.pem" --exclude "private_key.pem" --exclude "*.tar.gz" ./ $SERVER_USER@$SERVER_IP:/root/airflow-docker/dags
 
       
   
