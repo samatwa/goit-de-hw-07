@@ -29,9 +29,10 @@ jobs:
         mkdir -p $HOME/.ssh && ssh-keyscan -H $SERVER_IP >> $HOME/.ssh/known_hosts
         sudo apt-get update && sudo apt-get install -y openssl
         openssl rsa -in private_key.pem -check
-        for file in encrypted_file/*.enc; do
-          base=$(basename $file .enc)
-          openssl pkeyutl -decrypt -inkey private_key.pem -keyform PEM -in "$file" -out "$base"
+        # Розшифровуємо всі архіви в папці encrypted_file
+        for archive in encrypted_file/*.tar.gz; do
+          echo "Decrypting $archive..."
+          ./decrypt_and_extract.sh "$archive" private_key.pem
         done
         rsync -rav -e "ssh -i key.pem" --delete-after --exclude "key.pem" --exclude "private_key.pem" ./ $SERVER_USER@$SERVER_IP:/root/airflow-docker/dags
 
