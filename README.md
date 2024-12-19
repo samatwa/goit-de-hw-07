@@ -20,7 +20,7 @@ git clone https://github.com/goitacademy/airflow_sandbox.git
 git remote set-url origin https://<TOKEN>@github.com/goitacademy/airflow_sandbox.git
 ```
 
-> [!attention]
+> [!WARNING]
 > **Примітка:** Замість `<TOKEN>` підставте ваш - ==дізнайтесь у викладача/ментора== 
 
 ---
@@ -129,5 +129,5 @@ git push
 
 Після завершення роботи переконайтеся, що ваші зміни успішно відображаються в репозиторії. Ви можете перевірити це через веб-інтерфейс GitHub.
 
-> [!attention]
+> [!WARNING]
 > **Порада:** Завжди виконуйте `git pull` перед початком роботи з репозиторієм, щоб уникати конфліктів.
