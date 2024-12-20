@@ -1,18 +1,14 @@
 from airflow import DAG
-from airflow.operators.python import PythonOperator
+from airflow.operators.python import PythonOperator, BranchPythonOperator
 from airflow.providers.mysql.operators.mysql import SQLExecuteQueryOperator
-from airflow.operators.empty import EmptyOperator
 from airflow.providers.common.sql.sensors.sql import SqlSensor
 from datetime import datetime, timedelta
 import random
 import time
 
-# Функція для вибору медалі
-
-def execute_calc_task(ti):
-    medal = random.choice(['calc_Bronze', 'calc_Silver', 'calc_Gold'])
-    print(f"Selected medal: {medal}")
-    ti.xcom_push(key='task_to_execute', value=medal)
+# Функція для вибору завдання
+def pick_medal():
+    return random.choice(['calc_Bronze', 'calc_Silver', 'calc_Gold'])
 
 # Функція для затримки виконання
 def generate_delay():
@@ -23,7 +19,6 @@ def generate_delay():
 # Налаштування DAG
 with DAG(
     'medal_count_dag_churylov',
-
     default_args={
         'depends_on_past': False,
         'email_on_failure': False,
@@ -52,10 +47,10 @@ with DAG(
         """,
     )
 
-    # 2. Завдання для виконання вибору медалі
-    execute_task = PythonOperator(
-        task_id='execute_calc_task',
-        python_callable=execute_calc_task,
+    # 2. Вибір завдання
+    pick_medal_task = BranchPythonOperator(
+        task_id='pick_medal_task',
+        python_callable=pick_medal,
     )
 
     # 3. Завдання для кожного типу медалі
@@ -68,7 +63,6 @@ with DAG(
         FROM olympic_dataset.athlete_event_results
         WHERE medal = 'Bronze';
         """,
-        trigger_rule='none_failed',
     )
 
     calc_Silver = SQLExecuteQueryOperator(
@@ -80,7 +74,6 @@ with DAG(
         FROM olympic_dataset.athlete_event_results
         WHERE medal = 'Silver';
         """,
-        trigger_rule='none_failed',
     )
 
     calc_Gold = SQLExecuteQueryOperator(
@@ -92,14 +85,13 @@ with DAG(
         FROM olympic_dataset.athlete_event_results
         WHERE medal = 'Gold';
         """,
-        trigger_rule='none_failed',
     )
 
     # 4. Завдання для затримки
     generate_delay_task = PythonOperator(
         task_id='generate_delay',
         python_callable=generate_delay,
-        trigger_rule='none_failed',
+        trigger_rule='none_failed_min_one_success',
     )
 
     # 5. Сенсор для перевірки актуальності запису
@@ -116,27 +108,10 @@ with DAG(
         timeout=60,
         poke_interval=10,
         mode='poke',
-        trigger_rule='none_failed',
-    )
-
-    # Логіка для запуску обраного завдання
-    def decide_task_to_run(ti):
-        task_to_execute = ti.xcom_pull(key='task_to_execute', task_ids='execute_calc_task')
-        if task_to_execute == 'calc_Bronze':
-            return 'calc_Bronze'
-        elif task_to_execute == 'calc_Silver':
-            return 'calc_Silver'
-        elif task_to_execute == 'calc_Gold':
-            return 'calc_Gold'
-
-    branch_task = PythonOperator(
-        task_id='branch_task',
-        python_callable=decide_task_to_run,
+        trigger_rule='none_failed_min_one_success',
     )
 
     # Зв’язки між задачами
-    create_table >> execute_task >> branch_task
-    branch_task >> calc_Bronze >> generate_delay_task
-    branch_task >> calc_Silver >> generate_delay_task
-    branch_task >> calc_Gold >> generate_delay_task
-    generate_delay_task >> check_for_correctness
+    create_table >> pick_medal_task
+    pick_medal_task >> [calc_Bronze, calc_Silver, calc_Gold]
+    [calc_Bronze, calc_Silver, calc_Gold] >> generate_delay_task >> check_for_correctness
