@@ -45,7 +45,7 @@ with DAG(
             id INT AUTO_INCREMENT PRIMARY KEY,
             medal_type VARCHAR(10),
             count INT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
         """,
     )
