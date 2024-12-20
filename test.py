@@ -114,6 +114,6 @@ with DAG(
 
     # Зв’язки між задачами
     create_table >> pick_medal_task
-    create_table >> generate_delay_task  # Виконання затримки завжди
     pick_medal_task >> [calc_Bronze, calc_Silver, calc_Gold]
+    [calc_Bronze, calc_Silver, calc_Gold] >> generate_delay_task
     generate_delay_task >> check_for_correctness
