@@ -13,7 +13,10 @@ def pick_medal():
 
 # Функція для затримки виконання
 def generate_delay():
-    time.sleep(35)
+    # Випадкова затримка від 25 до 40 секунд
+    delay_time = random.randint(25, 40)
+    print(f"Generated delay: {delay_time} seconds")
+    time.sleep(delay_time)
 
 # Налаштування DAG
 with DAG(
