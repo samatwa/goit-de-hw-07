@@ -58,8 +58,8 @@ with DAG(
         task_id='calc_Bronze',
         conn_id='your_mysql_connection',
         sql="""
-        INSERT INTO medals (medal_type, count)
-        SELECT 'Bronze', COUNT(*), created_at
+        INSERT INTO medals (medal_type, count, created_at)
+        SELECT 'Bronze', COUNT(*), NOW()
         FROM olympic_dataset.athlete_event_results
         WHERE medal = 'Bronze';
         """,
@@ -69,8 +69,8 @@ with DAG(
         task_id='calc_Silver',
         conn_id='your_mysql_connection',
         sql="""
-        INSERT INTO medals (medal_type, count)
-        SELECT 'Silver', COUNT(*), created_at
+        INSERT INTO medals (medal_type, count, created_at)
+        SELECT 'Silver', COUNT(*), NOW()
         FROM olympic_dataset.athlete_event_results
         WHERE medal = 'Silver';
         """,
@@ -80,8 +80,8 @@ with DAG(
         task_id='calc_Gold',
         conn_id='your_mysql_connection',
         sql="""
-        INSERT INTO medals (medal_type, count)
-        SELECT 'Gold', COUNT(*), created_at
+        INSERT INTO medals (medal_type, count, created_at)
+        SELECT 'Gold', COUNT(*), NOW()
         FROM olympic_dataset.athlete_event_results
         WHERE medal = 'Gold';
         """,
