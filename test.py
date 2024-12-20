@@ -1,5 +1,5 @@
 from airflow import DAG
-from airflow.operators.python import PythonOperator, BranchPythonOperator
+from airflow.operators.python import PythonOperator
 from airflow.providers.mysql.operators.mysql import SQLExecuteQueryOperator
 from airflow.operators.empty import EmptyOperator
 from airflow.providers.common.sql.sensors.sql import SqlSensor
@@ -7,25 +7,20 @@ from datetime import datetime, timedelta
 import random
 import time
 
-# Функція для вибору випадкового медалю
-def select_random_medal(ti):
+# Функція для вибору медалі
+
+def execute_calc_task(ti):
     medal = random.choice(['Bronze', 'Silver', 'Gold'])
     print(f"Selected medal: {medal}")
-    ti.xcom_push(key='selected_medal', value=medal)
-
-# Функція для вибору завдання на основі обраного медалю
-def pick_medal(ti):
-    medal = ti.xcom_pull(key='selected_medal', task_ids='select_random_medal')
     if medal == 'Bronze':
-        return 'calc_Bronze'
+        ti.xcom_push(key='task_to_execute', value='calc_Bronze')
     elif medal == 'Silver':
-        return 'calc_Silver'
+        ti.xcom_push(key='task_to_execute', value='calc_Silver')
     elif medal == 'Gold':
-        return 'calc_Gold'
+        ti.xcom_push(key='task_to_execute', value='calc_Gold')
 
 # Функція для затримки виконання
 def generate_delay():
-    # Фіксована затримка 35 секунд
     delay_time = 35
     print(f"Generated delay: {delay_time} seconds")
     time.sleep(delay_time)
@@ -62,19 +57,13 @@ with DAG(
         """,
     )
 
-    # 2. Завдання для вибору випадкового медалю
-    select_random_medal_task = PythonOperator(
-        task_id='select_random_medal',
-        python_callable=select_random_medal
+    # 2. Завдання для виконання вибору медалі
+    execute_task = PythonOperator(
+        task_id='execute_calc_task',
+        python_callable=execute_calc_task,
     )
 
-    # 3. Завдання для вибору завдання на основі обраного медалю
-    pick_medal_task = BranchPythonOperator(
-        task_id='pick_medal_task',
-        python_callable=pick_medal
-    )
-
-    # 4. Завдання для кожного типу медалі
+    # 3. Завдання для кожного типу медалі
     calc_Bronze = SQLExecuteQueryOperator(
         task_id='calc_Bronze',
         conn_id='your_mysql_connection',
@@ -108,20 +97,20 @@ with DAG(
         """,
     )
 
-    # 5. Завдання для затримки
+    # 4. Завдання для затримки
     generate_delay_task = PythonOperator(
         task_id='generate_delay',
         python_callable=generate_delay
     )
 
-    # 6. Сенсор для перевірки актуальності запису
+    # 5. Сенсор для перевірки актуальності запису
     check_for_correctness = SqlSensor(
         task_id='check_for_correctness',
         conn_id='your_mysql_connection',
         sql="""
         SELECT 1
         FROM medals
-        WHERE TIMESTAMPDIFF(SECOND, created_at, NOW()) > 30
+        WHERE TIMESTAMPDIFF(SECOND, created_at, NOW()) <= 30
         ORDER BY created_at DESC
         LIMIT 1;
         """,
@@ -131,8 +120,8 @@ with DAG(
     )
 
     # Зв’язки між задачами
-    create_table >> select_random_medal_task >> pick_medal_task
-    pick_medal_task >> calc_Bronze >> generate_delay_task
-    pick_medal_task >> calc_Silver >> generate_delay_task
-    pick_medal_task >> calc_Gold >> generate_delay_task
+    create_table >> execute_task
+    execute_task >> calc_Bronze >> generate_delay_task
+    execute_task >> calc_Silver >> generate_delay_task
+    execute_task >> calc_Gold >> generate_delay_task
     generate_delay_task >> check_for_correctness
