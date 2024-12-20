@@ -1,90 +1,115 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator, BranchPythonOperator
-from airflow.utils.trigger_rule import TriggerRule as tr
-from datetime import datetime
+from airflow.operators.mysql_operator import MySqlOperator
+from airflow.operators.dummy import DummyOperator
+from airflow.sensors.sql import SqlSensor
+from datetime import datetime, timedelta
 import random
+import time
 
-# Функція для генерації випадкового числа
-def generate_number(ti):
-    number = random.randint(1, 100)
-    print(f"Generated number: {number}")
+# Функція для вибору випадкового медалю
+def pick_medal():
+    return random.choice(['calc_Bronze', 'calc_Silver', 'calc_Gold'])
 
-    return number
+# Функція для затримки виконання
+def generate_delay():
+    time.sleep(35)
 
-# Функція для перевірки парності числа
-def check_even_odd(ti):
-    number = ti.xcom_pull(task_ids='generate_number')
-
-    if number % 2 == 0:
-        return 'square_task'
-    else:
-        return 'cube_task'
-
-# Функція для піднесення числа до квадрата
-def square_number(ti):
-    number = ti.xcom_pull(task_ids='generate_number')
-    result = number ** 2
-
-    ti.xcom_push(key='math_result', value=result)
-    print(f"{number} squared is {result}")
-
-# Функція для піднесення числа до куба
-def cube_number(ti):
-    number = ti.xcom_pull(task_ids='generate_number')
-    result = number ** 3
-
-    ti.xcom_push(key='math_result', value=result)
-    print(f"{number} cubed is {result}")
-
-# Функція для витягування даних з xcom та prints
-def final_function(ti):
-    original_number = ti.xcom_pull(task_ids='generate_number')
-    math_result = ti.xcom_pull(key='math_result')
-
-    print(f"Original value {original_number}, math_result {math_result}")
-
-# Визначення DAG
-default_args = {
-    'owner': 'airflow',
-    'start_date': datetime(2024, 8, 4, 0, 0),
-}
-
+# Налаштування DAG
 with DAG(
-        'even_or_odd_square_or_cube_churylov',
-        default_args=default_args,
-        schedule_interval='*/10 * * * *',
-        catchup=False,
-        tags=["churylov"]
+    'medal_count_dag_churylov',
+    default_args={
+        'depends_on_past': False,
+        'email_on_failure': False,
+        'email_on_retry': False,
+        'retries': 1,
+        'retry_delay': timedelta(minutes=5),
+    },
+    description='DAG для підрахунку медалей',
+    schedule_interval=None,
+    start_date=datetime(2024, 12, 1),
+    catchup=False,
+    tags=['churylov'],
 ) as dag:
-    generate_number_task = PythonOperator(
-        task_id='generate_number',
-        python_callable=generate_number,
+
+    # 1. Завдання для створення таблиці
+    create_table = MySqlOperator(
+        task_id='create_table',
+        mysql_conn_id='your_mysql_connection',
+        sql="""
+        CREATE TABLE IF NOT EXISTS medals (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            medal_type VARCHAR(10),
+            count INT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+        """,
     )
 
-    check_even_odd_task = BranchPythonOperator(
-        task_id='check_even_odd',
-        python_callable=check_even_odd,
+    # 2. Завдання для вибору медалі
+    pick_medal_task = BranchPythonOperator(
+        task_id='pick_medal_task',
+        python_callable=pick_medal
     )
 
-    square_task = PythonOperator(
-        task_id='square_task',
-        python_callable=square_number,
+    # 3. Завдання для кожного типу медалі
+    calc_Bronze = MySqlOperator(
+        task_id='calc_Bronze',
+        mysql_conn_id='your_mysql_connection',
+        sql="""
+        INSERT INTO medals (medal_type, count)
+        SELECT 'Bronze', COUNT(*)
+        FROM olympic_dataset.athlete_event_results
+        WHERE medal = 'Bronze';
+        """,
     )
 
-    cube_task = PythonOperator(
-        task_id='cube_task',
-        python_callable=cube_number,
+    calc_Silver = MySqlOperator(
+        task_id='calc_Silver',
+        mysql_conn_id='your_mysql_connection',
+        sql="""
+        INSERT INTO medals (medal_type, count)
+        SELECT 'Silver', COUNT(*)
+        FROM olympic_dataset.athlete_event_results
+        WHERE medal = 'Silver';
+        """,
     )
 
-    end_task = PythonOperator(
-        task_id='end_task',
-        python_callable=final_function,
-        trigger_rule=tr.ONE_SUCCESS
+    calc_Gold = MySqlOperator(
+        task_id='calc_Gold',
+        mysql_conn_id='your_mysql_connection',
+        sql="""
+        INSERT INTO medals (medal_type, count)
+        SELECT 'Gold', COUNT(*)
+        FROM olympic_dataset.athlete_event_results
+        WHERE medal = 'Gold';
+        """,
     )
 
-    # Встановлення залежностей
-    generate_number_task >> check_even_odd_task
-    check_even_odd_task >> [square_task, cube_task]
-    square_task >> end_task
-    cube_task >> end_task
+    # 4. Завдання для затримки
+    generate_delay_task = PythonOperator(
+        task_id='generate_delay',
+        python_callable=generate_delay
+    )
 
+    # 5. Сенсор для перевірки актуальності запису
+    check_for_correctness = SqlSensor(
+        task_id='check_for_correctness',
+        conn_id='your_mysql_connection',
+        sql="""
+        SELECT 1
+        FROM medals
+        WHERE TIMESTAMPDIFF(SECOND, created_at, NOW()) <= 30
+        ORDER BY created_at DESC
+        LIMIT 1;
+        """,
+        timeout=60,
+        poke_interval=10,
+        mode='poke',
+    )
+
+    # Зв’язки між задачами
+    create_table >> pick_medal_task
+    pick_medal_task >> [calc_Bronze, calc_Silver, calc_Gold]
+    [calc_Bronze, calc_Silver, calc_Gold] >> generate_delay_task
+    generate_delay_task >> check_for_correctness
