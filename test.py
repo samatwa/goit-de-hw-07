@@ -110,6 +110,7 @@ with DAG(
         timeout=60,
         poke_interval=10,
         mode='poke',
+        success=False  # Встановлено для завершення помилкою, якщо запис знайдено
     )
 
     # Зв’язки між задачами
