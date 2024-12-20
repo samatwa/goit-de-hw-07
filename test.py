@@ -90,6 +90,9 @@ with DAG(
         """,
     )
 
+    # Завдання-заглушка для об'єднання
+    join_task = EmptyOperator(task_id='join_task')
+
     # 4. Завдання для затримки
     generate_delay_task = PythonOperator(
         task_id='generate_delay',
@@ -115,5 +118,5 @@ with DAG(
     # Зв’язки між задачами
     create_table >> pick_medal_task
     pick_medal_task >> [calc_Bronze, calc_Silver, calc_Gold]
-    [calc_Bronze, calc_Silver, calc_Gold] >> generate_delay_task
+    [calc_Bronze, calc_Silver, calc_Gold] >> join_task >> generate_delay_task
     generate_delay_task >> check_for_correctness
