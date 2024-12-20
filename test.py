@@ -13,8 +13,8 @@ def pick_medal():
 
 # Функція для затримки виконання
 def generate_delay():
-    # Випадкова затримка від 25 до 40 секунд
-    delay_time = random.randint(25, 40)
+    # Фіксована затримка 35 секунд
+    delay_time = 35
     print(f"Generated delay: {delay_time} seconds")
     time.sleep(delay_time)
 
