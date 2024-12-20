@@ -13,8 +13,8 @@ def pick_medal():
 
 # Функція для затримки виконання
 def generate_delay():
-    # Фіксована затримка 35 секунд
-    delay_time = 35
+    # Випадкова затримка від 25 до 40 секунд
+    delay_time = random.randint(25, 40)
     print(f"Generated delay: {delay_time} seconds")
     time.sleep(delay_time)
 
@@ -51,11 +51,6 @@ with DAG(
     )
 
     # 2. Завдання для вибору медалі
-    pick_medal = PythonOperator(
-        task_id='pick_medal',
-        python_callable=pick_medal
-    )
-
     pick_medal_task = BranchPythonOperator(
         task_id='pick_medal_task',
         python_callable=pick_medal
@@ -117,11 +112,8 @@ with DAG(
         mode='poke',
     )
 
-    # 6. Завдання-заглушка для завершення DAG
-    end_task = EmptyOperator(task_id='end_task')
-
     # Зв’язки між задачами
-    create_table >> pick_medal >> pick_medal_task
+    create_table >> pick_medal_task
     pick_medal_task >> [calc_Bronze, calc_Silver, calc_Gold]
     [calc_Bronze, calc_Silver, calc_Gold] >> generate_delay_task
-    generate_delay_task >> check_for_correctness >> end_task
+    generate_delay_task >> check_for_correctness
