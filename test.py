@@ -8,8 +8,20 @@ import random
 import time
 
 # Функція для вибору випадкового медалю
-def pick_medal():
-    return random.choice(['calc_Bronze', 'calc_Silver', 'calc_Gold'])
+def select_random_medal(ti):
+    medal = random.choice(['Bronze', 'Silver', 'Gold'])
+    print(f"Selected medal: {medal}")
+    ti.xcom_push(key='selected_medal', value=medal)
+
+# Функція для вибору завдання на основі обраного медалю
+def pick_medal(ti):
+    medal = ti.xcom_pull(key='selected_medal', task_ids='select_random_medal')
+    if medal == 'Bronze':
+        return 'calc_Bronze'
+    elif medal == 'Silver':
+        return 'calc_Silver'
+    elif medal == 'Gold':
+        return 'calc_Gold'
 
 # Функція для затримки виконання
 def generate_delay():
@@ -50,13 +62,19 @@ with DAG(
         """,
     )
 
-    # 2. Завдання для вибору медалі
+    # 2. Завдання для вибору випадкового медалю
+    select_random_medal_task = PythonOperator(
+        task_id='select_random_medal',
+        python_callable=select_random_medal
+    )
+
+    # 3. Завдання для вибору завдання на основі обраного медалю
     pick_medal_task = BranchPythonOperator(
         task_id='pick_medal_task',
         python_callable=pick_medal
     )
 
-    # 3. Завдання для кожного типу медалі
+    # 4. Завдання для кожного типу медалі
     calc_Bronze = SQLExecuteQueryOperator(
         task_id='calc_Bronze',
         conn_id='your_mysql_connection',
@@ -90,13 +108,13 @@ with DAG(
         """,
     )
 
-    # 4. Завдання для затримки
+    # 5. Завдання для затримки
     generate_delay_task = PythonOperator(
         task_id='generate_delay',
         python_callable=generate_delay
     )
 
-    # 5. Сенсор для перевірки актуальності запису
+    # 6. Сенсор для перевірки актуальності запису
     check_for_correctness = SqlSensor(
         task_id='check_for_correctness',
         conn_id='your_mysql_connection',
@@ -110,11 +128,10 @@ with DAG(
         timeout=60,
         poke_interval=10,
         mode='poke',
-        success=False  # Встановлено для завершення помилкою, якщо запис знайдено
     )
 
     # Зв’язки між задачами
-    create_table >> pick_medal_task
+    create_table >> select_random_medal_task >> pick_medal_task
     pick_medal_task >> calc_Bronze >> generate_delay_task
     pick_medal_task >> calc_Silver >> generate_delay_task
     pick_medal_task >> calc_Gold >> generate_delay_task
