@@ -101,7 +101,7 @@ with DAG(
         sql="""
         SELECT 1
         FROM medals
-        WHERE TIMESTAMPDIFF(SECOND, created_at, NOW()) <= 30
+        WHERE TIMESTAMPDIFF(SECOND, created_at, NOW()) > 30
         ORDER BY created_at DESC
         LIMIT 1;
         """,
