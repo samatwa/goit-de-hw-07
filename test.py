@@ -1,8 +1,8 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator, BranchPythonOperator
-from airflow.operators.mysql_operator import MySqlOperator
-from airflow.operators.dummy import DummyOperator
-from airflow.sensors.sql import SqlSensor
+from airflow.providers.mysql.operators.mysql import SQLExecuteQueryOperator
+from airflow.operators.empty import EmptyOperator
+from airflow.providers.common.sql.sensors.sql import SqlSensor
 from datetime import datetime, timedelta
 import random
 import time
@@ -18,6 +18,7 @@ def generate_delay():
 # Налаштування DAG
 with DAG(
     'medal_count_dag_churylov',
+
     default_args={
         'depends_on_past': False,
         'email_on_failure': False,
@@ -26,16 +27,16 @@ with DAG(
         'retry_delay': timedelta(minutes=5),
     },
     description='DAG для підрахунку медалей',
-    schedule_interval=None,
+    schedule=None,
     start_date=datetime(2024, 12, 1),
     catchup=False,
     tags=['churylov'],
 ) as dag:
 
     # 1. Завдання для створення таблиці
-    create_table = MySqlOperator(
+    create_table = SQLExecuteQueryOperator(
         task_id='create_table',
-        mysql_conn_id='your_mysql_connection',
+        conn_id='your_mysql_connection',
         sql="""
         CREATE TABLE IF NOT EXISTS medals (
             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -53,9 +54,9 @@ with DAG(
     )
 
     # 3. Завдання для кожного типу медалі
-    calc_Bronze = MySqlOperator(
+    calc_Bronze = SQLExecuteQueryOperator(
         task_id='calc_Bronze',
-        mysql_conn_id='your_mysql_connection',
+        conn_id='your_mysql_connection',
         sql="""
         INSERT INTO medals (medal_type, count)
         SELECT 'Bronze', COUNT(*)
@@ -64,9 +65,9 @@ with DAG(
         """,
     )
 
-    calc_Silver = MySqlOperator(
+    calc_Silver = SQLExecuteQueryOperator(
         task_id='calc_Silver',
-        mysql_conn_id='your_mysql_connection',
+        conn_id='your_mysql_connection',
         sql="""
         INSERT INTO medals (medal_type, count)
         SELECT 'Silver', COUNT(*)
@@ -75,9 +76,9 @@ with DAG(
         """,
     )
 
-    calc_Gold = MySqlOperator(
+    calc_Gold = SQLExecuteQueryOperator(
         task_id='calc_Gold',
-        mysql_conn_id='your_mysql_connection',
+        conn_id='your_mysql_connection',
         sql="""
         INSERT INTO medals (medal_type, count)
         SELECT 'Gold', COUNT(*)
