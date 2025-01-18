@@ -19,24 +19,26 @@ def delayed_execution():
     time.sleep(35)
 
 with DAG(
-        'medal_statistics_dag',
+        'medal_statistics_kari',
         default_args=default_args,
         schedule_interval=None,
         catchup=False,
         tags=["kari"]
 ) as dag:
+
     create_schema = MySqlOperator(
     task_id='create_schema',
     mysql_conn_id='goit_mysql_db',
     sql="""
-    CREATE DATABASE IF NOT EXISTS kari_medal_statistics;
+    CREATE DATABASE IF NOT EXISTS kari_tatistics;
     """
     )
+
     create_table = MySqlOperator(
         task_id='create_table',
         mysql_conn_id='goit_mysql_db',
         sql="""
-        CREATE TABLE IF NOT EXISTS kari_medal_statistics (
+        CREATE TABLE IF NOT EXISTS kari_statistics (
             id INT AUTO_INCREMENT PRIMARY KEY,
             medal_type VARCHAR(255),
             count INT,
@@ -54,7 +56,7 @@ with DAG(
         task_id='bronze_task',
         mysql_conn_id='goit_mysql_db',
         sql="""
-        INSERT INTO kari_medal_statistics (medal_type, count, created_at)
+        INSERT INTO kari_statistics (medal_type, count, created_at)
         SELECT 'Bronze', COUNT(*), NOW()
         FROM olympic_dataset.athlete_event_results
         WHERE medal = 'Bronze';
@@ -65,7 +67,7 @@ with DAG(
         task_id='silver_task',
         mysql_conn_id='goit_mysql_db',
         sql="""
-        INSERT INTO kari_medal_statistics (medal_type, count, created_at)
+        INSERT INTO kari_statistics (medal_type, count, created_at)
         SELECT 'Silver', COUNT(*), NOW()
         FROM olympic_dataset.athlete_event_results
         WHERE medal = 'Silver';
@@ -76,7 +78,7 @@ with DAG(
         task_id='gold_task',
         mysql_conn_id='goit_mysql_db',
         sql="""
-        INSERT INTO kari_medal_statistics (medal_type, count, created_at)
+        INSERT INTO kari_statistics (medal_type, count, created_at)
         SELECT 'Gold', COUNT(*), NOW()
         FROM olympic_dataset.athlete_event_results
         WHERE medal = 'Gold';
@@ -93,7 +95,7 @@ with DAG(
         task_id='check_recent_record',
         conn_id='goit_mysql_db',
         sql="""
-        SELECT 1 FROM kari_medal_statistics
+        SELECT 1 FROM kari_statistics
         WHERE TIMESTAMPDIFF(SECOND, created_at, NOW()) <= 30
         ORDER BY created_at DESC
         LIMIT 1;
