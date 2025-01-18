@@ -25,12 +25,12 @@ with DAG(
         catchup=False,
         tags=["kari"]
 ) as dag:
-        create_schema = MySqlOperator(
-        task_id='create_schema',
-        mysql_conn_id='goit_mysql_db',
-        sql="""
-        CREATE DATABASE IF NOT EXISTS kari_medal_statistics;
-        """
+    create_schema = MySqlOperator(
+    task_id='create_schema',
+    mysql_conn_id='goit_mysql_db',
+    sql="""
+    CREATE DATABASE IF NOT EXISTS kari_medal_statistics;
+    """
     )
     create_table = MySqlOperator(
         task_id='create_table',
