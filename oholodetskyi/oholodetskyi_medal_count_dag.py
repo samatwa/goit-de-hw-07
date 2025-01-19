@@ -6,6 +6,7 @@ from airflow.operators.python import PythonOperator, BranchPythonOperator
 from airflow.sensors.sql import SqlSensor
 from airflow.utils.trigger_rule import TriggerRule as tr
 from datetime import datetime
+import logging
 
 # Аргументи за замовчуванням для DAG
 default_args = {
@@ -22,11 +23,14 @@ def pick_medal():
 # Функція для вибору наступного завдання
 def decide_task(**kwargs):
     medal = kwargs['ti'].xcom_pull(task_ids='pick_medal')
+    logging.info(f"Medal chosen: {medal}")
     return f"calc_{medal}"
 
 # Функція для затримки
 def generate_delay():
-    time.sleep(10)  # 10 секунд затримки для демонстрації
+    logging.info("Starting delay...")
+    time.sleep(35)  # 35 секунд для демонстрації
+    logging.info("Delay complete.")
 
 # Визначення DAG
 with DAG(
@@ -116,11 +120,12 @@ with DAG(
             WHEN TIMESTAMPDIFF(SECOND, MAX(created_at), NOW()) <= 30 THEN 1
             ELSE 0
         END
-        FROM oholodetskyi_medal_count;
+        FROM oholodetskyi_medal_count
+        HAVING COUNT(*) > 0;
         """,
         mode='poke',
         poke_interval=5,
-        timeout=60,
+        timeout=31,  # Змініть для перевірки поведінки сенсора
     )
 
     # Встановлення залежностей
