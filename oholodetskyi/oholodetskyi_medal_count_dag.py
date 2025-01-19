@@ -120,7 +120,7 @@ with DAG(
         """,
         mode='poke',
         poke_interval=5,
-        timeout=29,
+        timeout=60,
     )
 
     # Встановлення залежностей
