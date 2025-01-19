@@ -26,7 +26,7 @@ def decide_task(**kwargs):
 
 # Функція для затримки
 def generate_delay():
-    time.sleep(35)  # 35 секунд затримки для демонстрації
+    time.sleep(10)  # 10 секунд затримки для демонстрації
 
 # Визначення DAG
 with DAG(
@@ -120,7 +120,7 @@ with DAG(
         """,
         mode='poke',
         poke_interval=5,
-        timeout=60,
+        timeout=29,
     )
 
     # Встановлення залежностей
