@@ -24,7 +24,7 @@ connection_name = "goit_mysql_db_oholodetskyi"
 
 # Визначення DAG
 with DAG(
-        'working_with_mysql_db',
+        'oholodetskyi_working_with_mysql_db',
         default_args=default_args,
         schedule_interval=None,  # DAG не має запланованого інтервалу виконання
         catchup=False,  # Вимкнути запуск пропущених задач
