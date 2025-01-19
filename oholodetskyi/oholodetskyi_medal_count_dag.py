@@ -1,11 +1,11 @@
+import random
+import time
 from airflow import DAG
 from airflow.operators.mysql_operator import MySqlOperator
 from airflow.operators.python import PythonOperator, BranchPythonOperator
 from airflow.sensors.sql import SqlSensor
 from airflow.utils.trigger_rule import TriggerRule as tr
 from datetime import datetime
-import random
-import time
 
 # Аргументи за замовчуванням для DAG
 default_args = {
@@ -13,12 +13,18 @@ default_args = {
     'start_date': datetime(2025, 1, 19),
 }
 
-# Генерація випадкового значення
+# Функція для генерації випадкового значення
 def pick_medal():
     medals = ['Bronze', 'Silver', 'Gold']
-    return random.choice(medals)
+    selected_medal = random.choice(medals)
+    return selected_medal
 
-# Завдання для затримки виконання
+# Функція для вибору наступного завдання
+def decide_task(**kwargs):
+    medal = kwargs['ti'].xcom_pull(task_ids='pick_medal')
+    return f"calc_{medal}"
+
+# Функція для затримки
 def generate_delay():
     time.sleep(35)  # 35 секунд затримки для демонстрації
 
@@ -45,16 +51,13 @@ with DAG(
         """
     )
 
-    # Завдання 2: Вибір медалі
+    # Завдання 2: Генерація випадкового значення
     pick_medal_task = PythonOperator(
         task_id='pick_medal',
         python_callable=pick_medal,
     )
 
     # Завдання 3: Розгалуження
-    def decide_task(**kwargs):
-        return f"calc_{kwargs['ti'].xcom_pull(task_ids='pick_medal')}"
-
     branch_task = BranchPythonOperator(
         task_id='pick_medal_task',
         python_callable=decide_task,
@@ -66,8 +69,9 @@ with DAG(
         task_id='calc_Bronze',
         mysql_conn_id='goit_mysql_db_oholodetskyi',
         sql="""
-        INSERT INTO oholodetskyi_medal_count (medal_type, count)
-        SELECT 'Bronze', COUNT(*) FROM olympic_dataset.athlete_event_results
+        INSERT INTO oholodetskyi_medal_count (medal_type, count, created_at)
+        SELECT 'Bronze', COUNT(*), NOW()
+        FROM olympic_dataset.athlete_event_results
         WHERE medal = 'Bronze';
         """
     )
@@ -77,8 +81,9 @@ with DAG(
         task_id='calc_Silver',
         mysql_conn_id='goit_mysql_db_oholodetskyi',
         sql="""
-        INSERT INTO oholodetskyi_medal_count (medal_type, count)
-        SELECT 'Silver', COUNT(*) FROM olympic_dataset.athlete_event_results
+        INSERT INTO oholodetskyi_medal_count (medal_type, count, created_at)
+        SELECT 'Silver', COUNT(*), NOW()
+        FROM olympic_dataset.athlete_event_results
         WHERE medal = 'Silver';
         """
     )
@@ -88,13 +93,14 @@ with DAG(
         task_id='calc_Gold',
         mysql_conn_id='goit_mysql_db_oholodetskyi',
         sql="""
-        INSERT INTO oholodetskyi_medal_count (medal_type, count)
-        SELECT 'Gold', COUNT(*) FROM olympic_dataset.athlete_event_results
+        INSERT INTO oholodetskyi_medal_count (medal_type, count, created_at)
+        SELECT 'Gold', COUNT(*), NOW()
+        FROM olympic_dataset.athlete_event_results
         WHERE medal = 'Gold';
         """
     )
 
-    # Завдання 5: Затримка виконання
+    # Завдання 5: Затримка
     delay_task = PythonOperator(
         task_id='generate_delay',
         python_callable=generate_delay,
