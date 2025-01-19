@@ -29,7 +29,7 @@ def decide_task(**kwargs):
 # Функція для затримки
 def generate_delay():
     logging.info("Starting delay...")
-    time.sleep(35)  # 35 секунд для демонстрації
+    time.sleep(15)
     logging.info("Delay complete.")
 
 # Визначення DAG
