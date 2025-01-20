@@ -18,7 +18,7 @@ def choose_medal_type():
     return random.choice(['Bronze', 'Silver', 'Gold'])
 
 def delayed_execution():
-    time.sleep(35)
+    time.sleep(15)
 
 with DAG(
         'kari_mo',
@@ -27,27 +27,6 @@ with DAG(
         catchup=False,
         tags=["kari"]
 ) as dag:
-
-    create_schema = MySqlOperator(
-    task_id='create_schema',
-    mysql_conn_id=connection_name,
-    sql="""
-    CREATE DATABASE IF NOT EXISTS kari_mo;
-    """
-    )
-
-    create_table = MySqlOperator(
-        task_id='create_table',
-        mysql_conn_id=connection_name,
-        sql="""
-        CREATE TABLE IF NOT EXISTS kari_mo.kari_statistics (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            medal_type VARCHAR(255),
-            count INT,
-            created_at DATETIME
-        );
-        """
-    )
 
     choose_medal = BranchPythonOperator(
         task_id='choose_medal',
