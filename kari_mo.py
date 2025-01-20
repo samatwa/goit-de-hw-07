@@ -21,12 +21,21 @@ def delayed_execution():
     time.sleep(15)
 
 with DAG(
-        'kari_mo',
+        'kari_mo_new',
         default_args=default_args,
         schedule_interval=None,
         catchup=False,
         tags=["kari"]
 ) as dag:
+
+    create_schema = MySqlOperator(
+        task_id='create_schema',
+        mysql_conn_id=connection_name,
+        sql="""
+        CREATE DATABASE IF NOT EXISTS kari_mo_new;
+        """
+    )
+
     create_table = MySqlOperator(
         task_id='create_table',
         mysql_conn_id=connection_name,
@@ -49,7 +58,7 @@ with DAG(
         task_id='bronze_task',
         mysql_conn_id=connection_name,
         sql="""
-        INSERT INTO kari_mo.kari_statistics (medal_type, count, created_at)
+        INSERT INTO kari_mo_new.kari_statistics (medal_type, count, created_at)
         SELECT 'Bronze', COUNT(*), NOW()
         FROM olympic_dataset.athlete_event_results
         WHERE medal = 'Bronze';
@@ -60,7 +69,7 @@ with DAG(
         task_id='silver_task',
         mysql_conn_id=connection_name,
         sql="""
-        INSERT INTO kari_mo.kari_statistics (medal_type, count, created_at)
+        INSERT INTO kari_mo_new.kari_statistics (medal_type, count, created_at)
         SELECT 'Silver', COUNT(*), NOW()
         FROM olympic_dataset.athlete_event_results
         WHERE medal = 'Silver';
@@ -71,7 +80,7 @@ with DAG(
         task_id='gold_task',
         mysql_conn_id=connection_name,
         sql="""
-        INSERT INTO kari_mo.kari_statistics (medal_type, count, created_at)
+        INSERT INTO kari_mo_new.kari_statistics (medal_type, count, created_at)
         SELECT 'Gold', COUNT(*), NOW()
         FROM olympic_dataset.athlete_event_results
         WHERE medal = 'Gold';
@@ -88,7 +97,7 @@ with DAG(
         task_id='check_recent_record',
         conn_id=connection_name,
         sql="""
-        SELECT 1 FROM kari_mo.kari_statistics
+        SELECT 1 FROM kari_mo_new.kari_statistics
         WHERE TIMESTAMPDIFF(SECOND, created_at, NOW()) <= 30
         ORDER BY created_at DESC
         LIMIT 1;
@@ -99,5 +108,5 @@ with DAG(
     )
 
     # Define task dependencies
-    create_table >> choose_medal
+    create_schema >> create_table >> choose_medal
     choose_medal >> [bronze_task, silver_task, gold_task] >> delay_task >> check_recent_record
