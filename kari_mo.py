@@ -27,7 +27,7 @@ with DAG(
         catchup=False,
         tags=["kari"]
 ) as dag:
-      create_table = MySqlOperator(
+    create_table = MySqlOperator(
         task_id='create_table',
         mysql_conn_id=connection_name,
         sql="""
