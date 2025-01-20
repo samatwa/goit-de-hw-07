@@ -27,6 +27,18 @@ with DAG(
         catchup=False,
         tags=["kari"]
 ) as dag:
+      create_table = MySqlOperator(
+        task_id='create_table',
+        mysql_conn_id=connection_name,
+        sql="""
+        CREATE TABLE IF NOT EXISTS kari_statistics (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            medal_type VARCHAR(255),
+            count INT,
+            created_at DATETIME
+        );
+        """
+    )
 
     choose_medal = BranchPythonOperator(
         task_id='choose_medal',
@@ -87,5 +99,5 @@ with DAG(
     )
 
     # Define task dependencies
-    create_schema >> create_table >> choose_medal
+    create_table >> choose_medal
     choose_medal >> [bronze_task, silver_task, gold_task] >> delay_task >> check_recent_record
