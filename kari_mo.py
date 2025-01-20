@@ -12,7 +12,7 @@ default_args = {
     'start_date': datetime(2024, 8, 4, 0, 0),
 }
 
-connection_name = "goit_mysql_db"
+connection_name = "goit_mysql_db_kari"
 
 def choose_medal_type():
     return random.choice(['Bronze', 'Silver', 'Gold'])
