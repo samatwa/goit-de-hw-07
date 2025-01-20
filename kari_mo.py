@@ -110,5 +110,5 @@ with DAG(
     )
 
     # Define task dependencies
-    create_schema >> create_table >> choose_medal
+    # create_schema >> create_table >> choose_medal
     choose_medal >> [bronze_task, silver_task, gold_task] >> delay_task >> check_recent_record
