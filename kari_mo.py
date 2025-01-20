@@ -15,7 +15,9 @@ default_args = {
 connection_name = "goit_mysql_db_kari"
 
 def choose_medal_type():
-    return random.choice(['Bronze', 'Silver', 'Gold'])
+    medal = random.choice(['Bronze', 'Silver', 'Gold'])
+    return f"{medal.lower()}_task"
+
 
 def delayed_execution():
     time.sleep(15)
@@ -28,26 +30,26 @@ with DAG(
         tags=["kari"]
 ) as dag:
 
-    create_schema = MySqlOperator(
-        task_id='create_schema',
-        mysql_conn_id=connection_name,
-        sql="""
-        CREATE DATABASE IF NOT EXISTS kari_mo_new;
-        """
-    )
+    # create_schema = MySqlOperator(
+    #     task_id='create_schema',
+    #     mysql_conn_id=connection_name,
+    #     sql="""
+    #     CREATE DATABASE IF NOT EXISTS kari_mo_new;
+    #     """
+    # )
 
-    create_table = MySqlOperator(
-        task_id='create_table',
-        mysql_conn_id=connection_name,
-        sql="""
-        CREATE TABLE IF NOT EXISTS kari_statistics (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            medal_type VARCHAR(255),
-            count INT,
-            created_at DATETIME
-        );
-        """
-    )
+    # create_table = MySqlOperator(
+    #     task_id='create_table',
+    #     mysql_conn_id=connection_name,
+    #     sql="""
+    #     CREATE TABLE IF NOT EXISTS kari_statistics (
+    #         id INT AUTO_INCREMENT PRIMARY KEY,
+    #         medal_type VARCHAR(255),
+    #         count INT,
+    #         created_at DATETIME
+    #     );
+    #     """
+    # )
 
     choose_medal = BranchPythonOperator(
         task_id='choose_medal',
