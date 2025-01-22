@@ -17,7 +17,7 @@ default_args = {
 }
 
 # Параметри
-MYSQL_CONN_ID = 'goit_mysql_db'   # Назва MySQL-з'єднання в Airflow
+MYSQL_CONN_ID = 'goit_mysql_db_oleksandr_s'   # Назва MySQL-з'єднання в Airflow
 TABLE_NAME = 'oleksandr_s.medals_log'  # Таблиця, куди пишемо підрахунки
 
 with DAG(
