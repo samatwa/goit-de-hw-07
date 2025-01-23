@@ -9,6 +9,9 @@ from airflow.providers.mysql.operators.mysql import MySqlOperator
 from airflow.sensors.sql import SqlSensor
 from airflow.exceptions import AirflowSkipException
 
+# Додатковий імпорт тригер-рулу
+from airflow.utils.trigger_rule import TriggerRule
+
 # Аргументи за замовчуванням
 default_args = {
     'owner': 'airflow',
@@ -17,16 +20,16 @@ default_args = {
 }
 
 # Параметри
-MYSQL_CONN_ID = 'goit_mysql_db_oleksandr_s'   # Назва MySQL-з'єднання в Airflow
-TABLE_NAME = 'oleksandr_s.medals_log'  # Таблиця, куди пишемо підрахунки
+MYSQL_CONN_ID = 'goit_mysql_db_oleksandr_s'
+TABLE_NAME = 'oleksandr_s.medals_log'
 
 with DAG(
-    dag_id='medals_dag_oleks_s',                  # унікальне ім'я DAG
+    dag_id='medals_dag_oleks_s',
     description='DAG for medals counting with random branching',
     default_args=default_args,
-    schedule_interval=None,                    # Вмикаємо ручний запуск
+    schedule_interval=None,
     catchup=False,
-    tags=['oleksandr_s']                      # Тег
+    tags=['oleksandr_s']
 ) as dag:
 
     # 1. Створення таблиці з потрібними полями (IF NOT EXISTS)
@@ -115,11 +118,12 @@ with DAG(
 
     delay_task = PythonOperator(
         task_id='delay_task',
-        python_callable=_random_delay
+        python_callable=_random_delay,
+        trigger_rule=TriggerRule.ONE_SUCCESS
     )
 
     # 6. Сенсор: перевірка, що найновіший запис у TABLE_NAME не старший за 30 секунд
-    #    Якщо умовне поле (CASE) = 5, сенсор завершується успішно, інакше — продовжує «покати» до timeout
+    #    Якщо селект повертає 1 => сенсор успішний; якщо 0 => продовжує чекати
     check_recent_record = SqlSensor(
         task_id='check_recent_record',
         conn_id=MYSQL_CONN_ID,
@@ -147,4 +151,5 @@ with DAG(
     branch >> count_silver
     branch >> count_gold
 
+    # Використовуємо список завдань, щоб об'єднати всі 3 в один потік:
     [count_bronze, count_silver, count_gold] >> delay_task >> check_recent_record
