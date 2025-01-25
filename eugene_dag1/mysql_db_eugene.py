@@ -22,7 +22,7 @@ connection_name = "goit_mysql_db_eugene"
 
 # Визначення DAG
 with DAG(
-        'working_with_mysql_db_eugene',  # Унікальний dag_id
+        'working_with_mysql_db_eugene',
         default_args=default_args,
         schedule_interval=None,  # DAG не має запланованого інтервалу виконання
         catchup=False,  # Вимкнути запуск пропущених задач
@@ -34,7 +34,7 @@ with DAG(
         task_id='create_schema',
         mysql_conn_id=connection_name,
         sql="""
-        CREATE DATABASE IF NOT EXISTS neo_data;
+        CREATE DATABASE IF NOT EXISTS oleksiy;
         """
     )
 
@@ -43,7 +43,7 @@ with DAG(
         task_id='create_table',
         mysql_conn_id=connection_name,
         sql="""
-        CREATE TABLE IF NOT EXISTS neo_data.games (
+        CREATE TABLE IF NOT EXISTS eugene.games (
         `edition` text,
         `edition_id` int DEFAULT NULL,
         `edition_url` text,
@@ -59,33 +59,31 @@ with DAG(
         """
     )
 
-    # Сенсор для порівняння кількості рядків у таблицях `neo_data.games` і `neo_data.source_games`
+    # Сенсор для порівняння кількості рядків у таблицях `eugene.games` і `neo_data.games`
     check_for_data = SqlSensor(
         task_id='check_if_counts_same',
         conn_id=connection_name,
-        sql="""
-        WITH count_in_copy AS (
-            SELECT COUNT(*) nrows_copy FROM neo_data.games
-        ),
-        count_in_original AS (
-            SELECT COUNT(*) nrows_original FROM neo_data.source_games
-        )
-        SELECT nrows_copy <> nrows_original 
-        FROM count_in_copy
-        CROSS JOIN count_in_original;
-        """,
+        sql="""WITH count_in_copy AS (
+                select COUNT(*) nrows_copy from eugene.games
+                ),
+                count_in_original AS (
+                select COUNT(*) nrows_original from neo_data.games
+                )
+               SELECT nrows_copy <> nrows_original FROM count_in_copy
+               CROSS JOIN count_in_original
+               ;""",
         mode='poke',  # Режим перевірки: періодична перевірка умови
         poke_interval=5,  # Перевірка кожні 5 секунд
-        timeout=30,  # Тайм-аут після 30 секунд
+        timeout=6,  # Тайм-аут після 6 секунд (1 повторна перевірка)
     )
 
-    # Завдання для оновлення даних у таблиці `neo_data.games`
+    # Завдання для оновлення даних у таблиці `eugene.games`
     refresh_data = MySqlOperator(
         task_id='refresh',
         mysql_conn_id=connection_name,
         sql="""
-            TRUNCATE neo_data.games;  # Очищення таблиці
-            INSERT INTO neo_data.games SELECT * FROM neo_data.source_games;  # Вставка даних з іншої таблиці
+            TRUNCATE eugene.games;  # Очищення таблиці
+            INSERT INTO eugene.games SELECT * FROM neo_data.games;  # Вставка даних з іншої таблиці
         """,
     )
 
