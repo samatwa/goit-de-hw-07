@@ -4,6 +4,7 @@ from airflow.operators.mysql_operator import MySqlOperator
 from airflow.operators.python import PythonOperator, BranchPythonOperator
 from airflow.operators.dummy import DummyOperator
 from airflow.sensors.sql import SqlSensor
+from airflow.utils.trigger_rule import TriggerRule as tr
 import random
 import time
 
