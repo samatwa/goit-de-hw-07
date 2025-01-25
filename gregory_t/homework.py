@@ -107,6 +107,7 @@ with DAG(
     # Завдання 5: Затримка
     delay = PythonOperator(
         task_id='delay_task',
+        trigger_rule=tr.ONE_SUCCESS,
         python_callable=delay_task
     )
 
