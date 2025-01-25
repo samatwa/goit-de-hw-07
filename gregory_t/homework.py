@@ -24,7 +24,7 @@ def choose_medal_type(**kwargs):
 
 # Функція для затримки
 def delay_task():
-    time.sleep(25)  # 35 секунд затримки
+    time.sleep(10)
 
 # Визначення DAG
 with DAG(
