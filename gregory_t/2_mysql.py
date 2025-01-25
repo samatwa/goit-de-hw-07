@@ -22,7 +22,7 @@ connection_name = "goit_mysql_db"
 
 # Визначення DAG
 with DAG(
-        'working_with_mysql_db',
+        'working_with_mysql_db_gregory',
         default_args=default_args,
         schedule_interval=None,  # DAG не має запланованого інтервалу виконання
         catchup=False,  # Вимкнути запуск пропущених задач
