@@ -23,7 +23,7 @@ def choose_medal_type(**kwargs):
 
 # Функція для затримки
 def delay_task():
-    time.sleep(35)  # 35 секунд затримки
+    time.sleep(25)  # 35 секунд затримки
 
 # Визначення DAG
 with DAG(
@@ -61,9 +61,13 @@ with DAG(
     branch_gold = DummyOperator(task_id='branch_gold')
 
     # Завдання 3: Розгалуження
+    def branch_logic(**kwargs):
+        medal_type = kwargs['ti'].xcom_pull(task_ids='choose_medal', key='medal_type')
+        return f"branch_{medal_type.lower()}"
+
     branch_task = BranchPythonOperator(
         task_id='branch_task',
-        python_callable=lambda **kwargs: f"branch_{kwargs['ti'].xcom_pull(task_ids='choose_medal', key='medal_type').lower()}",
+        python_callable=branch_logic,
         provide_context=True
     )
 
