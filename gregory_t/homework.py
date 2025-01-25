@@ -37,7 +37,7 @@ with DAG(
     # Завдання 1: Створення таблиці
     create_table = MySqlOperator(
         task_id='create_table',
-        mysql_conn_id='goit_mysql_db',
+        mysql_conn_id='goit_mysql_db_gregory',
         sql="""
         CREATE TABLE IF NOT EXISTS olympic_dataset.gregory_medal_counts (
             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -70,7 +70,7 @@ with DAG(
     # Завдання 4: Логіка для Bronze
     count_bronze = MySqlOperator(
         task_id='count_bronze',
-        mysql_conn_id='goit_mysql_db',
+        mysql_conn_id='goit_mysql_db_gregory',
         sql="""
         INSERT INTO olympic_dataset.gregory_medal_counts (medal_type, count)
         SELECT 'Bronze', COUNT(*) FROM olympic_dataset.athlete_event_results
@@ -81,7 +81,7 @@ with DAG(
     # Завдання 4: Логіка для Silver
     count_silver = MySqlOperator(
         task_id='count_silver',
-        mysql_conn_id='goit_mysql_db',
+        mysql_conn_id='goit_mysql_db_gregory',
         sql="""
         INSERT INTO olympic_dataset.gregory_medal_counts (medal_type, count)
         SELECT 'Silver', COUNT(*) FROM olympic_dataset.athlete_event_results
@@ -92,7 +92,7 @@ with DAG(
     # Завдання 4: Логіка для Gold
     count_gold = MySqlOperator(
         task_id='count_gold',
-        mysql_conn_id='goit_mysql_db',
+        mysql_conn_id='goit_mysql_db_gregory',
         sql="""
         INSERT INTO olympic_dataset.gregory_medal_counts (medal_type, count)
         SELECT 'Gold', COUNT(*) FROM olympic_dataset.athlete_event_results
@@ -109,7 +109,7 @@ with DAG(
     # Завдання 6: Перевірка останнього запису
     check_recent_record = SqlSensor(
         task_id='check_recent_record',
-        conn_id='goit_mysql_db',
+        conn_id='goit_mysql_db_gregory',
         sql="""
         SELECT CASE
             WHEN TIMESTAMPDIFF(SECOND, MAX(created_at), NOW()) <= 30 THEN 1
