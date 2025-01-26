@@ -12,14 +12,13 @@ default_args = {
     'start_date': datetime(2024, 8, 4),
 }
 
-# 1) Випадковий вибір медалі
+# 1) Функція для випадкового вибору медалі
 def pick_medal_value(**kwargs):
     chosen_medal = random.choice(['Bronze', 'Silver', 'Gold'])
     print(f"Picked medal: {chosen_medal}")
-    # Записуємо в XCom
     kwargs['ti'].xcom_push(key='picked_medal', value=chosen_medal)
 
-# 2) Функція визначає, яку з трьох гілок запускати
+# 2) Логіка розгалуження
 def pick_branch(**kwargs):
     chosen_medal = kwargs['ti'].xcom_pull(task_ids='pick_medal', key='picked_medal')
     if chosen_medal == 'Bronze':
@@ -29,13 +28,13 @@ def pick_branch(**kwargs):
     else:
         return 'calc_Gold'
 
-# 3) Затримка (рандомно 5 або 35 секунд)
+# 3) Рандомна затримка (5 або 35 секунд)
 def generate_delay():
     delay = random.choice([5, 35])
     print(f"Sleeping for {delay} seconds...")
     time.sleep(delay)
 
-# 4) Запит для сенсора: перевірити, чи останній запис не старший за 30 секунд
+# 4) SQL для сенсора: перевірити, чи останній запис не старший за 30 секунд
 check_recent_record_sql = """
 SELECT TIMESTAMPDIFF(SECOND, created_at, NOW()) <= 30 
 FROM olympic_dataset.eugene_medal_counts
@@ -43,7 +42,7 @@ ORDER BY created_at DESC
 LIMIT 1;
 """
 
-# Створюємо DAG
+# DAG
 with DAG(
     'medal_dag_eugene',
     default_args=default_args,
@@ -52,7 +51,7 @@ with DAG(
     tags=["eugene"]
 ) as dag:
 
-    # (1) Створення таблиці
+    # (1) Створити таблицю 
     create_table = MySqlOperator(
         task_id='create_table',
         mysql_conn_id='goit_mysql_db_eugene',
@@ -66,21 +65,21 @@ with DAG(
         """
     )
 
-    # (2) Обрати випадкову медаль
+    # (2) Випадкова медаль
     pick_medal = PythonOperator(
         task_id='pick_medal',
         python_callable=pick_medal_value,
         provide_context=True
     )
 
-    # (3) Розгалуження (BranchPythonOperator)
+    # (3) BranchPythonOperator для вибору гілки
     pick_medal_task = BranchPythonOperator(
         task_id='pick_medal_task',
         python_callable=pick_branch,
         provide_context=True
     )
 
-    # (4) Підрахунок Bronze
+    # (4a) Підрахунок Bronze
     calc_Bronze = MySqlOperator(
         task_id='calc_Bronze',
         mysql_conn_id='goit_mysql_db_eugene',
@@ -92,7 +91,7 @@ with DAG(
         """
     )
 
-    # (4) Підрахунок Silver
+    # (4b) Підрахунок Silver
     calc_Silver = MySqlOperator(
         task_id='calc_Silver',
         mysql_conn_id='goit_mysql_db_eugene',
@@ -104,7 +103,7 @@ with DAG(
         """
     )
 
-    # (4) Підрахунок Gold
+    # (4c) Підрахунок Gold
     calc_Gold = MySqlOperator(
         task_id='calc_Gold',
         mysql_conn_id='goit_mysql_db_eugene',
@@ -116,20 +115,22 @@ with DAG(
         """
     )
 
-    # (5) Затримка (5 або 35с)
+    # (5) Затримка з trigger_rule='one_success'
     generate_delay_task = PythonOperator(
         task_id='generate_delay',
-        python_callable=generate_delay
+        python_callable=generate_delay,
+        trigger_rule='one_success'  
     )
 
-    # (6) Сенсор - перевіряє, чи останній запис створений < 30 секунд тому
+    # (6) Сенсор - перевірка (також з trigger_rule='one_success')
     check_for_correctness = SqlSensor(
         task_id='check_for_correctness',
         conn_id='goit_mysql_db_eugene',
         sql=check_recent_record_sql,
         poke_interval=5,
         timeout=30,
-        mode='poke'
+        mode='poke',
+        trigger_rule='one_success'  
     )
 
     # Зв’язки
