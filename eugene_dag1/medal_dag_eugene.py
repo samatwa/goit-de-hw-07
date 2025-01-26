@@ -20,6 +20,12 @@ def generate_delay():
 def pick_medal():
     return random.choice(['calc_Bronze', 'calc_Silver', 'calc_Gold'])
 
+# Окреме завдання для вибору медалі
+def pick_medal_value():
+    medal = random.choice(['Bronze', 'Silver', 'Gold'])
+    print(f"Picked medal: {medal}")
+    return medal
+
 # Функція для перевірки коректності даних
 check_recent_record_sql = """
 SELECT TIMESTAMPDIFF(SECOND, created_at, NOW()) <= 30 
@@ -30,11 +36,11 @@ LIMIT 1;
 
 # Визначення DAG
 with DAG(
-    'medal_dag_eugene',
+    'medal_dag',
     default_args=default_args,
     schedule_interval=None,
     catchup=False,
-    tags=["eugene"]
+    tags=["medals"]
 ) as dag:
 
     # Завдання для створення таблиці
@@ -51,7 +57,13 @@ with DAG(
         """
     )
 
-    # Завдання для вибору медалі
+    # Завдання для вибору медалі (окреме завдання)
+    pick_medal = PythonOperator(
+        task_id='pick_medal',
+        python_callable=pick_medal_value
+    )
+
+    # Завдання для розгалуження вибору медалі
     pick_medal_task = BranchPythonOperator(
         task_id='pick_medal_task',
         python_callable=pick_medal
@@ -110,7 +122,7 @@ with DAG(
     )
 
     # Встановлення залежностей
-    create_table >> pick_medal_task
+    create_table >> pick_medal >> pick_medal_task
     pick_medal_task >> calc_Bronze >> generate_delay_task
     pick_medal_task >> calc_Silver >> generate_delay_task
     pick_medal_task >> calc_Gold >> generate_delay_task
