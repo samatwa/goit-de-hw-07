@@ -63,18 +63,14 @@ with DAG(
     check_for_data = SqlSensor(
         task_id='check_if_counts_same',
         conn_id=connection_name,
-        sql="""WITH count_in_copy AS (
-                select COUNT(*) nrows_copy from oleksiy.games
-                ),
-                count_in_original AS (
-                select COUNT(*) nrows_original from olympic_dataset.games
-                )
-               SELECT nrows_copy <> nrows_original FROM count_in_copy
-               CROSS JOIN count_in_original
-               ;""",
+        sql="""
+        SELECT 
+            (SELECT COUNT(*) FROM oleksiy.games) <>
+            (SELECT COUNT(*) FROM olympic_dataset.games);
+        """,
         mode='poke',  # Режим перевірки: періодична перевірка умови
         poke_interval=5,  # Перевірка кожні 5 секунд
-        timeout=90,  # Тайм-аут 60 секунд
+        timeout=300,  # Тайм-аут 300 секунд
     )
 
     # Завдання для оновлення даних у таблиці `oleksiy.games`
