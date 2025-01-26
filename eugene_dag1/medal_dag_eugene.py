@@ -43,11 +43,11 @@ LIMIT 1;
 
 # Створюємо DAG
 with DAG(
-    'medal_dag',
+    'medal_dag_eugene',
     default_args=default_args,
     schedule_interval=None,
     catchup=False,
-    tags=["medals"]
+    tags=["eugene"]
 ) as dag:
 
     # 1. Створення таблиці (якщо немає)
