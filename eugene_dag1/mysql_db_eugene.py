@@ -1,7 +1,7 @@
 from airflow import DAG
 from datetime import datetime
 from airflow.sensors.sql import SqlSensor
-from airflow.operators.mysql_operator import MySqlOperator
+from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.operators.python import PythonOperator
 from airflow.utils.trigger_rule import TriggerRule as tr
 from airflow.utils.state import State
@@ -30,18 +30,18 @@ with DAG(
 ) as dag:
 
     # Завдання для створення схеми бази даних (якщо не існує)
-    create_schema = MySqlOperator(
+    create_schema = SQLExecuteQueryOperator(
         task_id='create_schema',
-        mysql_conn_id=connection_name,
+        conn_id=connection_name,
         sql="""
         CREATE DATABASE IF NOT EXISTS oleksiy;
         """
     )
 
     # Завдання для створення таблиці (якщо не існує)
-    create_table = MySqlOperator(
+    create_table = SQLExecuteQueryOperator(
         task_id='create_table',
-        mysql_conn_id=connection_name,
+        conn_id=connection_name,
         sql="""
         CREATE TABLE IF NOT EXISTS oleksiy.games (
         `edition` text,
@@ -74,17 +74,17 @@ with DAG(
                ;""",
         mode='poke',  # Режим перевірки: періодична перевірка умови
         poke_interval=5,  # Перевірка кожні 5 секунд
-        timeout=60,  # Тайм-аут після 6 секунд (1 повторна перевірка)
+        timeout=90,  # Тайм-аут 60 секунд
     )
 
     # Завдання для оновлення даних у таблиці `oleksiy.games`
-    refresh_data = MySqlOperator(
+    refresh_data = SQLExecuteQueryOperator(
         task_id='refresh',
-        mysql_conn_id=connection_name,
+        conn_id=connection_name,
         sql="""
-            TRUNCATE oleksiy.games;  # Очищення таблиці
+            TRUNCATE TABLE oleksiy.games;  # Очищення таблиці
             INSERT INTO oleksiy.games SELECT * FROM olympic_dataset.games;  # Вставка даних з іншої таблиці
-        """,
+        """
     )
 
     # Завдання для примусового встановлення статусу DAG як успішного в разі невдачі
