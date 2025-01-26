@@ -59,14 +59,14 @@ with DAG(
         """
     )
 
-    # Сенсор для порівняння кількості рядків у таблицях `oleksiy.games` і `olympic_dataset.games`
+    # Сенсор для порівняння кількості рядків у таблицях `oleksiy.games` і `neo_data.games`
     check_for_data = SqlSensor(
         task_id='check_if_counts_same',
         conn_id=connection_name,
         sql="""
         SELECT 
             (SELECT COUNT(*) FROM oleksiy.games) <>
-            (SELECT COUNT(*) FROM olympic_dataset.games);
+            (SELECT COUNT(*) FROM neo_data.games);
         """,
         mode='poke',  # Режим перевірки: періодична перевірка умови
         poke_interval=5,  # Перевірка кожні 5 секунд
@@ -79,7 +79,7 @@ with DAG(
         conn_id=connection_name,
         sql="""
             TRUNCATE TABLE oleksiy.games;  # Очищення таблиці
-            INSERT INTO oleksiy.games SELECT * FROM olympic_dataset.games;  # Вставка даних з іншої таблиці
+            INSERT INTO oleksiy.games SELECT * FROM neo_data.games;  # Вставка даних з іншої таблиці
         """
     )
 
