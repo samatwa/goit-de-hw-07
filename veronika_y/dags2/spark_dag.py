@@ -16,7 +16,7 @@ with DAG(
         tags=["veronika_y"]  # Теги для класифікації DAG
 ) as dag:
     spark_submit_task = SparkSubmitOperator(
-        application='dags/veronika_y/spark_test.py',
+        application='dags/veronika_y/script/spark_test.py',
         task_id='spark_submit_job',
         conn_id='spark-default',
         verbose=1,
