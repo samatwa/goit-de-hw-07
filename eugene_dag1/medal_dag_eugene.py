@@ -111,7 +111,7 @@ with DAG(
         """
     )
 
-    # Ось «точка збору» після гілок
+    # Точка збору після гілок
     join_branches = DummyOperator(
         task_id='join_branches',
         trigger_rule='one_success' 
@@ -139,5 +139,5 @@ with DAG(
     pick_medal_task >> calc_Silver >> join_branches
     pick_medal_task >> calc_Gold   >> join_branches
 
-    # Після join іде наша затримка та сенсор
+    # Після join іде затримка та сенсор
     join_branches >> generate_delay_task >> check_for_correctness
