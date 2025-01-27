@@ -22,12 +22,5 @@ with DAG(
         verbose=1,
         dag=dag)
 
-    spark_submit_task_2 = SparkSubmitOperator(
-        application='veronika_y/spark_test.py',
-        task_id='spark_submit_job',
-        conn_id='spark-default',
-        verbose=1,
-        dag=dag)
 
-    # Встановлення залежностей між завданнями
-    spark_submit_task >> spark_submit_task_2
+    spark_submit_task
