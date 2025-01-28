@@ -11,9 +11,9 @@ import time
 # Аргументи за замовчуванням для DAG
 default_args = {
     'owner': 'airflow',
-    'start_date': datetime(2025, 1, 25),
+    'start_date': datetime(2025, 1, 28),
     'retries': 1,
-    'retry_delay': timedelta(minutes=5),
+    'retry_delay': timedelta(minutes=4),
 }
 
 # Функція для вибору випадкового значення медалі
@@ -125,7 +125,7 @@ with DAG(
         """,
         mode='poke',
         poke_interval=5,
-        timeout=60
+        timeout=31
     )
 
     # Встановлення залежностей
