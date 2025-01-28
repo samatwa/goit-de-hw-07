@@ -1,93 +1,136 @@
 from airflow import DAG
+from datetime import datetime, timedelta
+from airflow.operators.mysql_operator import MySqlOperator
 from airflow.operators.python import PythonOperator, BranchPythonOperator
+from airflow.operators.dummy import DummyOperator
+from airflow.sensors.sql import SqlSensor
 from airflow.utils.trigger_rule import TriggerRule as tr
-from datetime import datetime
 import random
+import time
 
-
-# Функція для генерації випадкового числа
-def generate_number():
-    number = random.randint(1, 100)
-    print(f"Generated number: {number}")
-    return number
-
-
-# Функція для перевірки парності числа
-def check_even_odd(ti):
-    number = ti.xcom_pull(task_ids='generate_number')
-
-    if number % 2 == 0:
-        return 'square_task'
-    else:
-        return 'cube_task'
-
-
-# Функція для піднесення числа до квадрата
-def square_number(ti):
-    number = ti.xcom_pull(task_ids='generate_number')
-    result = number ** 2
-
-    ti.xcom_push(key='math_result', value=result)
-    print(f"{number} squared is {result}")
-
-
-# Функція для піднесення числа до куба
-def cube_number(ti):
-    number = ti.xcom_pull(task_ids='generate_number')
-    result = number ** 3
-
-    ti.xcom_push(key='math_result', value=result)
-    print(f"{number} cubed is {result}")
-
-
-def final_function(ti):
-    original_number = ti.xcom_pull(task_ids='generate_number')
-    math_result = ti.xcom_pull(key='math_result')
-
-    print(f"Original value {original_number}, math_result {math_result}")
-
-
-# Визначення DAG
+# Аргументи за замовчуванням для DAG
 default_args = {
     'owner': 'airflow',
-    'start_date': datetime(2024, 8, 4, 0, 0),
+    'start_date': datetime(2025, 1, 25),
+    'retries': 1,
+    'retry_delay': timedelta(minutes=5),
 }
 
+# Функція для вибору випадкового значення медалі
+def choose_medal_type(**kwargs):
+    medal = random.choice(['Bronze', 'Silver', 'Gold'])
+    kwargs['ti'].xcom_push(key='medal_type', value=medal)
+    return medal
+
+# Функція для затримки
+def delay_task():
+    time.sleep(10)
+
+# Визначення DAG
 with DAG(
-        'even_or_odd_square_or_cube_v',
-        default_args=default_args,
-        schedule_interval='*/10 * * * *',
-        catchup=False,
-        tags=["yegor"]
+    'yegor_medal_count_dag',
+    default_args=default_args,
+    schedule_interval=None,
+    catchup=False,
+    tags=['yegor']
 ) as dag:
-    generate_number_task = PythonOperator(
-        task_id='generate_number',
-        python_callable=generate_number,
+
+    # Завдання 1: Створення таблиці
+    create_table = MySqlOperator(
+        task_id='create_table',
+        mysql_conn_id='goit_mysql_db_yegor',
+        sql="""
+        CREATE TABLE IF NOT EXISTS olympic_dataset.yegor_medal_counts (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            medal_type VARCHAR(10),
+            count INT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+        """
     )
 
-    check_even_odd_task = BranchPythonOperator(
-        task_id='check_even_odd',
-        python_callable=check_even_odd,
+    # Завдання 2: Вибір типу медалі
+    choose_medal = PythonOperator(
+        task_id='choose_medal',
+        python_callable=choose_medal_type,
+        provide_context=True
     )
 
-    square_task = PythonOperator(
-        task_id='square_task',
-        python_callable=square_number,
+    # Dummy оператори для розгалуження
+    branch_bronze = DummyOperator(task_id='branch_bronze')
+    branch_silver = DummyOperator(task_id='branch_silver')
+    branch_gold = DummyOperator(task_id='branch_gold')
+
+    # Завдання 3: Розгалуження
+    def branch_logic(**kwargs):
+        medal_type = kwargs['ti'].xcom_pull(task_ids='choose_medal', key='medal_type')
+        return f"branch_{medal_type.lower()}"
+
+    branch_task = BranchPythonOperator(
+        task_id='branch_task',
+        python_callable=branch_logic,
+        provide_context=True
     )
 
-    cube_task = PythonOperator(
-        task_id='cube_task',
-        python_callable=cube_number,
+    # Завдання 4: Логіка для Bronze
+    count_bronze = MySqlOperator(
+        task_id='count_bronze',
+        mysql_conn_id='goit_mysql_db_yegor',
+        sql="""
+        INSERT INTO olympic_dataset.yegor_medal_counts (medal_type, count)
+        SELECT 'Bronze', COUNT(*) FROM olympic_dataset.athlete_event_results
+        WHERE medal = 'Bronze';
+        """
     )
 
-    end_task = PythonOperator(
-        task_id='end_task',
-        python_callable=final_function,
-        trigger_rule=tr.ONE_SUCCESS
+    # Завдання 4: Логіка для Silver
+    count_silver = MySqlOperator(
+        task_id='count_silver',
+        mysql_conn_id='goit_mysql_db_yegor',
+        sql="""
+        INSERT INTO olympic_dataset.yegor_medal_counts (medal_type, count)
+        SELECT 'Silver', COUNT(*) FROM olympic_dataset.athlete_event_results
+        WHERE medal = 'Silver';
+        """
+    )
+
+    # Завдання 4: Логіка для Gold
+    count_gold = MySqlOperator(
+        task_id='count_gold',
+        mysql_conn_id='goit_mysql_db_yegor',
+        sql="""
+        INSERT INTO olympic_dataset.yegor_medal_counts (medal_type, count)
+        SELECT 'Gold', COUNT(*) FROM olympic_dataset.athlete_event_results
+        WHERE medal = 'Gold';
+        """
+    )
+
+    # Завдання 5: Затримка
+    delay = PythonOperator(
+        task_id='delay_task',
+        trigger_rule=tr.ONE_SUCCESS,
+        python_callable=delay_task
+    )
+
+    # Завдання 6: Перевірка останнього запису
+    check_recent_record = SqlSensor(
+        task_id='check_recent_record',
+        conn_id='goit_mysql_db_yegor',
+        sql="""
+        SELECT CASE
+            WHEN TIMESTAMPDIFF(SECOND, MAX(created_at), NOW()) <= 30 THEN 1
+            ELSE 0
+        END
+        FROM olympic_dataset.yegor_medal_counts;
+        """,
+        mode='poke',
+        poke_interval=5,
+        timeout=60
     )
 
     # Встановлення залежностей
-    generate_number_task >> check_even_odd_task
-    check_even_odd_task >> [square_task, cube_task]
-    square_task >> end_task
-    cube_task >> end_task
+    create_table >> choose_medal >> branch_task
+
+    branch_task >> branch_bronze >> count_bronze >> delay >> check_recent_record
+    branch_task >> branch_silver >> count_silver >> delay >> check_recent_record
+    branch_task >> branch_gold >> count_gold >> delay >> check_recent_record
