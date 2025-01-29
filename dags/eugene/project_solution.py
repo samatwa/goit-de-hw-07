@@ -21,7 +21,7 @@ with DAG(
 
     # Landing to bronze
     landing_to_bronze_all = SparkSubmitOperator(
-        application='dags/eugene/landing_to_bronze.py',  # Шлях до скрипту
+        application='/opt/airflow/dags/eugene/landing_to_bronze.py',  # Шлях до скрипту
         task_id='landing_to_bronze_all_tables',  # Унікальний ідентифікатор завдання
         conn_id='spark-default',  # Ідентифікатор з'єднання Spark
         verbose=1, # Рівень деталізації логів
@@ -30,7 +30,7 @@ with DAG(
 
     # Bronze to silver
     bronze_to_silver_all = SparkSubmitOperator(
-        application='dags/eugene/bronze_to_silver.py',  
+        application='/opt/airflow/dags/eugene/bronze_to_silver.py',  
         task_id='bronze_to_silver_all_tables', 
         conn_id='spark-default', 
         verbose=1,
@@ -39,7 +39,7 @@ with DAG(
 
     # Silver to gold (агрегація) 
     silver_to_gold_avg_stats = SparkSubmitOperator(
-        application='dags/eugene/silver_to_gold.py',  
+        application='/opt/airflow/dags/eugene/silver_to_gold.py',  
         task_id='silver_to_gold_avg_stats', 
         conn_id='spark-default',  
         verbose=1,
