@@ -9,8 +9,8 @@ from airflow import DAG
 from airflow.providers.apache.spark.operators.spark_submit import SparkSubmitOperator
 
 default_args = {
-    'owner': 'krystyna_k',
-    'start_date': datetime(2025, 2, 1),
+    'owner': 'airflow',
+    'start_date': datetime(2025, 1, 1),
 }
 
 connection_id = 'spark-default'  # назва Spark Connection у Airflow
