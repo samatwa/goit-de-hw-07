@@ -1,5 +1,5 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import udf, col
+from pyspark.sql.functions import udf, col, lit
 from pyspark.sql.types import StringType
 import re, os, logging
 
@@ -36,7 +36,11 @@ def process_table(spark, table_name):
 
     # Видалення дублікатів рядків
     df = df.dropDuplicates()
-    
+
+    # Перевірка та заповнення відсутніх значень у стовпці medal значенням "No Medal"
+    if "medal" in df.columns:
+        df = df.withColumn("medal", col("medal").na.fill("No Medal"))
+
     # Логування попереднього перегляду
     logger.info(f"Data preview after cleaning for {table_name}:")
     df.show(20)  

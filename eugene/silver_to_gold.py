@@ -26,9 +26,9 @@ if __name__ == "__main__":
     bio_df = spark.read.parquet("silver/athlete_bio", schema=bio_schema)
     results_df = spark.read.parquet("silver/athlete_event_results")
 
-    # Фільтрація медалей
-    valid_medals = ["Gold", "Silver", "Bronze"]
-    results_selected = results_df.select("athlete_id", "sport", "medal").filter(col("medal").isin(valid_medals))
+    # Вибір колонок з athlete_event_results та обробка відсутніх значень у колонці medal
+    results_selected = results_df.select("athlete_id", "sport", "medal") \
+        .withColumn("medal", col("medal").na.fill("No Medal"))
 
     # Вибір колонок з athlete_bio
     bio_selected = bio_df.select("athlete_id", "sex", "country_noc", "weight", "height")
