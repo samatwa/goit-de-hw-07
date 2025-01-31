@@ -1,5 +1,11 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import avg, current_timestamp, col
+from pyspark.sql.functions import avg, current_timestamp, col, stddev, lit, round
+from pyspark.sql.types import StructType, StructField, StringType, DoubleType
+import logging
+
+# Налаштування логування
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
     # SparkSession з ім'ям додатку "SilverToGold"
@@ -7,37 +13,54 @@ if __name__ == "__main__":
         .appName("SilverToGold") \
         .getOrCreate()
 
-    # Зчитування даних з папок silver/athlete_bio та silver/athlete_event_results у форматі Parquet
-    bio_df = spark.read.parquet("silver/athlete_bio")
+    # Схема для athlete_bio
+    bio_schema = StructType([
+        StructField("athlete_id", StringType(), True),
+        StructField("sex", StringType(), True),
+        StructField("country_noc", StringType(), True),
+        StructField("weight", DoubleType(), True),
+        StructField("height", DoubleType(), True)
+    ])
+
+    # Зчитування даних з папок silver/athlete_bio та silver/athlete_event_results
+    bio_df = spark.read.parquet("silver/athlete_bio", schema=bio_schema)
     results_df = spark.read.parquet("silver/athlete_event_results")
 
-    # Перетворення типу колонок weight та height на Double для коректних математичних операцій
-    bio_df = bio_df.withColumn("weight", col("weight").cast("double")) \
-                   .withColumn("height", col("height").cast("double"))
+    # Фільтрація медалей
+    valid_medals = ["Gold", "Silver", "Bronze"]
+    results_selected = results_df.select("athlete_id", "sport", "medal").filter(col("medal").isin(valid_medals))
 
-    # Вибір необхідних колонок з athlete_bio
+    # Вибір колонок з athlete_bio
     bio_selected = bio_df.select("athlete_id", "sex", "country_noc", "weight", "height")
 
-    # Вибір необхідних колонок з athlete_event_results
-    results_selected = results_df.select("athlete_id", "sport", "medal")
+    # Об'єднання датафреймів і фільтрація індивідуальних аномалій
+    joined_df = bio_selected.join(results_selected, on="athlete_id", how="inner") \
+        .filter((col("weight").isNotNull()) & (col("height").isNotNull())) \
+        .filter((col("weight") > 30) & (col("weight") < 500) &  # Логічний діапазон для ваги
+                (col("height") > 100) & (col("height") < 300))  # Логічний діапазон для зросту
 
-    # Об'єднання датафреймів за колонкою athlete_id
-    joined_df = bio_selected.join(results_selected, on="athlete_id", how="inner")
-
-    # Групування даних за sport, medal, sex, country_noc та обчислення середніх значень weight і height
+    # Групування та обчислення середніх значень
     avg_stats = joined_df.groupBy("sport", "medal", "sex", "country_noc") \
         .agg(
-            avg("weight").alias("avg_weight"),  # Середня вага
-            avg("height").alias("avg_height")   # Середній зріст
+            round(avg("weight"), 2).alias("avg_weight"),  # Округлення середньої ваги
+            round(avg("height"), 2).alias("avg_height"),  # Округлення середнього зросту
+            stddev("weight").alias("stddev_weight"),
+            stddev("height").alias("stddev_height")
         ) \
-        .withColumn("timestamp", current_timestamp())  # Колонка з поточним часом
+        .withColumn("timestamp", current_timestamp())
 
-    # Вивід фінального DataFrame у логи для перегляду
-    print("Final aggregated data preview:")
-    avg_stats.show()  # Показати фінальний результат у консолі
+    # Фільтрація потенційних аномалій за стандартним відхиленням
+    filtered_stats = avg_stats.filter(
+        (col("stddev_weight") < lit(50)) &  # Відсіювання великих відхилень у вазі
+        (col("stddev_height") < lit(30))    # Те ж саме для зросту
+    )
 
-    # Запис результатів у папку gold/avg_stats у форматі Parquet з режимом перезапису
-    avg_stats.write.parquet("gold/avg_stats", mode="overwrite")
+    # Логування результатів
+    logger.info("Final aggregated data preview:")
+    filtered_stats.show()
+
+    # Запис результатів з оптимізацією партицій
+    filtered_stats.repartition("sport", "medal").write.parquet("gold/avg_stats", mode="overwrite")
 
     # Завершення сесії
     spark.stop()

@@ -1,49 +1,63 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import udf, col
 from pyspark.sql.types import StringType
-import re
+import re, os, logging
+
+# Налаштування логування
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def clean_text(text):
-    # Видалення небажаних символів, залишаючи тільки літери, цифри та основні розділові знаки
-    return re.sub(r'[^a-zA-Z0-9,.\\"\']', '', str(text))
+    if text is None:
+        return None
+    # Видалення небажаних символів
+    return re.sub(r"[^a-zA-Z0-9,.'\" ]", '', str(text))
 
-# Створення користувацької функції (UDF) для очистки тексту
+# Створення UDF для очистки тексту
 clean_text_udf = udf(clean_text, StringType())
 
 def process_table(spark, table_name):
-    # Зчитування даних з папки bronze/{table_name} у форматі Parquet
-    df = spark.read.parquet(f"bronze/{table_name}")
+    # Шлях до вхідних даних
+    bronze_path = f"bronze/{table_name}"
+    if not os.path.exists(bronze_path):
+        logger.error(f"Bronze table {bronze_path} not found!")
+        return
     
-    # Пошук усіх текстових колонок (тип StringType) у датафреймі
+    # Зчитування даних з Parquet-файлу
+    df = spark.read.parquet(bronze_path)
+    
+    # Пошук усіх текстових колонок
     text_cols = [field.name for field in df.schema.fields if isinstance(field.dataType, StringType)]
     
-    # Застосування функції очистки тексту до кожної текстової колонки
-    for col_name in text_cols:
-        df = df.withColumn(col_name, clean_text_udf(col(col_name)))
-    
+    # Очищення текстових колонок за допомогою select
+    df = df.select(
+        *[clean_text_udf(col(c)).alias(c) if c in text_cols else col(c) for c in df.columns]
+    )
+
     # Видалення дублікатів рядків
     df = df.dropDuplicates()
     
-    # Вивід очищеного DataFrame у логи для перегляду
-    print(f"Data preview after cleaning for {table_name}:")
-    df.show()  # Показати очищені дані
+    # Логування попереднього перегляду
+    logger.info(f"Data preview after cleaning for {table_name}:")
+    df.show(5)  # Показати перші 5 рядків
     
-    # Запис очищених даних у форматі Parquet у папку silver/{table_name} з режимом перезапису
-    df.write.parquet(f"silver/{table_name}", mode="overwrite")
-    print(f"Processed {table_name} to silver")
+    # Запис очищених даних у Parquet у папку silver
+    silver_path = f"silver/{table_name}"
+    df.write.parquet(silver_path, mode="overwrite")
+    logger.info(f"Processed {table_name} to {silver_path}")
 
 if __name__ == "__main__":
-    # SparkSession з ім'ям додатку "BronzeToSilver"
+    # Ініціалізація SparkSession
     spark = SparkSession.builder \
         .appName("BronzeToSilver") \
         .getOrCreate()
 
-    # Список таблиць для обробки
+    # Список таблиць
     tables = ["athlete_bio", "athlete_event_results"]
     
-    # Обробка таблиць та виклик функції
+    # Обробка кожної таблиці
     for table in tables:
         process_table(spark, table)
     
-    # Завершення сесії
+    # Завершення сесії 
     spark.stop()

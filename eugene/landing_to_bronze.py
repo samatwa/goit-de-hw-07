@@ -1,52 +1,68 @@
 import requests
 from pyspark.sql import SparkSession
 import os
+import logging
 
+# Налаштування логування
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
+
+# Функція для завантаження даних з URL
 def download_data(table_name):
-    # URL для завантаження CSV-файлу таблиці
     url = f"https://ftp.goit.study/neoversity/{table_name}.csv"
-    print(f"Downloading from {url}")
-    
-    # HTTP GET запит для завантаження файлу
-    response = requests.get(url)
+    local_file = f"{table_name}.csv"
+    try:
+         # Перевірка, чи файл вже завантажено
+        if os.path.exists(local_file):
+            logger.info(f"File {local_file} already downloaded.")
+            return
 
-    # Статус відповіді
-    if response.status_code == 200:
-        # Відкриття локального файлу для запису в бінарному режимі
-        with open(f"{table_name}.csv", 'wb') as f:
-            f.write(response.content)  # Запис відповіді у файл
-        print(f"Downloaded {table_name}.csv")
-    else:
-        # Винятки
-        raise Exception(f"Failed to download {table_name}.csv")
+        logger.info(f"Downloading data from {url}")
+        response = requests.get(url, timeout=10)
+        response.raise_for_status() # Перевірка на помилки HTTP
+        
+        # Збереження вмісту у локальний файл
+        with open(local_file, 'wb') as f:
+            f.write(response.content)
+        
+        logger.info(f"Successfully downloaded {local_file}")
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Error downloading {table_name}: {e}")
+        raise
 
+# Функція для обробки таблиці
 def process_table(spark, table_name):
-    # CSV-файл таблиці
     download_data(table_name)
+
+    # Читання CSV-файлу у DataFrame
+    df = spark.read.csv(f"{table_name}.csv", header=True, inferSchema=True, mode="DROPMALFORMED")
     
-    # Читання CSV-файлу за допомогою Spark з автоматичним визначенням схеми та заголовками колонок
-    df = spark.read.csv(f"{table_name}.csv", header=True, inferSchema=True)
+    # Перевірка, чи DataFrame не порожній
+    if df.count() == 0:
+        logger.warning(f"Table {table_name} is empty or has malformed data.")
+        return
     
-    # Вивід DataFrame у логи для перегляду
-    print(f"Data preview for {table_name}:")
-    df.show()  # Показати вміст таблиці
+    # Логування попереднього перегляду даних
+    logger.info(f"Preview of table {table_name}:")
+    df.show(5)
     
-    # Запис даних у форматі Parquet у папку bronze/{table_name} з режимом перезапису
-    df.write.parquet(f"bronze/{table_name}", mode="overwrite")
-    print(f"Processed {table_name} to bronze")
+    # Шлях для збереження даних у форматі Parquet
+    output_path = f"bronze/{table_name}"
+    df.write.parquet(output_path, mode="overwrite")
+    logger.info(f"Saved table {table_name} to {output_path}")
 
 if __name__ == "__main__":
-    # SparkSession з ім'ям додатку "LandingToBronze"
     spark = SparkSession.builder \
         .appName("LandingToBronze") \
+        .config("spark.sql.shuffle.partitions", "4") \
+        .config("spark.sql.execution.arrow.pyspark.enabled", "true") \
         .getOrCreate()
-
+    
     # Список таблиць для обробки
     tables = ["athlete_bio", "athlete_event_results"]
-    
-    # Обробка таблиць та виклик функції
+
+    # Обробка кожної таблиці
     for table in tables:
         process_table(spark, table)
     
-    # Завершення сесії
     spark.stop()
