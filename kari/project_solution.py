@@ -19,7 +19,7 @@ dag = DAG(
 # 1. landing_to_bronze.py
 landing_to_bronze = SparkSubmitOperator(
     task_id="landing_to_bronze",  
-    application="/opt/airflow/dags/airflow_sandbox/kari/landing_to_bronze.py",  
+    application="/opt/airflow/dags/kari/landing_to_bronze.py",  
     conn_id="spark-default", 
     verbose=1,  
     dag=dag,
@@ -28,7 +28,7 @@ landing_to_bronze = SparkSubmitOperator(
 # 2. bronze_to_silver.py
 bronze_to_silver = SparkSubmitOperator(
     task_id="bronze_to_silver",
-    application="/opt/airflow/dags/airflow_sandbox/kari/bronze_to_silver.py", 
+    application="/opt/airflow/dags/kari/bronze_to_silver.py", 
     conn_id="spark-default", 
     verbose=1,  
     dag=dag,
@@ -37,7 +37,7 @@ bronze_to_silver = SparkSubmitOperator(
 # 3. silver_to_gold.py
 silver_to_gold = SparkSubmitOperator(
     task_id="silver_to_gold", 
-    application="/opt/airflow/dags/airflow_sandbox/kari/silver_to_gold.py",  
+    application="/opt/airflow/dags/kari/silver_to_gold.py",  
     verbose=1,  
     dag=dag,
 )
