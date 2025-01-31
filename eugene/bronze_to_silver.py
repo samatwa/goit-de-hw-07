@@ -26,6 +26,10 @@ def process_table(spark, table_name):
     # Зчитування даних з Parquet-файлу
     df = spark.read.parquet(bronze_path)
     
+    # Перевірка та заповнення відсутніх значень у стовпці medal значенням "No Medal"
+    if "medal" in df.columns:
+        df = df.fillna({"medal": "No Medal"})
+    
     # Пошук усіх текстових колонок
     text_cols = [field.name for field in df.schema.fields if isinstance(field.dataType, StringType)]
     
@@ -36,10 +40,6 @@ def process_table(spark, table_name):
 
     # Видалення дублікатів рядків
     df = df.dropDuplicates()
-
-    # Перевірка та заповнення відсутніх значень у стовпці medal значенням "No Medal"
-    if "medal" in df.columns:
-        df = df.fillna({"medal": "No Medal"})
 
     # Логування попереднього перегляду
     logger.info(f"Data preview after cleaning for {table_name}:")
