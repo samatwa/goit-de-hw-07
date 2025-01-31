@@ -10,7 +10,7 @@ from airflow.providers.apache.spark.operators.spark_submit import SparkSubmitOpe
 
 default_args = {
     'owner': 'airflow',
-    'start_date': datetime(2025, 1, 1),
+    'start_date': datetime(2025, 1, 1)
 }
 
 connection_id = 'spark-default'  # назва Spark Connection у Airflow
@@ -28,7 +28,7 @@ with DAG(
         task_id='landing_to_bronze',
         application='dags/oleksandr_s_spark_jobs/landing_to_bronze.py',
         conn_id=connection_id,
-        verbose=True,
+        verbose=1
     )
 
     # 2. bronze_to_silver
@@ -36,7 +36,7 @@ with DAG(
         task_id='bronze_to_silver',
         application='dags/oleksandr_s_spark_jobs/bronze_to_silver.py',
         conn_id=connection_id,
-        verbose=True,
+        verbose=1
     )
 
     # 3. silver_to_gold
@@ -44,7 +44,7 @@ with DAG(
         task_id='silver_to_gold',
         application='dags/oleksandr_s_spark_jobs/silver_to_gold.py',
         conn_id=connection_id,
-        verbose=True,
+        verbose=1
     )
 
     # Послідовність виконання
