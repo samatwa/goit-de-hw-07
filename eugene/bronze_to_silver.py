@@ -39,7 +39,7 @@ def process_table(spark, table_name):
 
     # Перевірка та заповнення відсутніх значень у стовпці medal значенням "No Medal"
     if "medal" in df.columns:
-        df = df.withColumn("medal", col("medal").na.fill("No Medal"))
+        df = df.fillna({"medal": "No Medal"})
 
     # Логування попереднього перегляду
     logger.info(f"Data preview after cleaning for {table_name}:")

@@ -28,7 +28,7 @@ if __name__ == "__main__":
 
     # Вибір колонок з athlete_event_results та обробка відсутніх значень у колонці medal
     results_selected = results_df.select("athlete_id", "sport", "medal") \
-        .withColumn("medal", col("medal").na.fill("No Medal"))
+        .fillna({"medal": "No Medal"})
 
     # Вибір колонок з athlete_bio
     bio_selected = bio_df.select("athlete_id", "sex", "country_noc", "weight", "height")
