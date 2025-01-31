@@ -44,7 +44,7 @@ def process_table(spark, table_name):
     
     # Логування попереднього перегляду даних
     logger.info(f"Preview of table {table_name}:")
-    df.show(5)
+    df.show(20)
     
     # Шлях для збереження даних у форматі Parquet
     output_path = f"bronze/{table_name}"

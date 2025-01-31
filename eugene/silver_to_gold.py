@@ -41,13 +41,13 @@ if __name__ == "__main__":
 
     # Групування та обчислення середніх значень
     avg_stats = joined_df.groupBy("sport", "medal", "sex", "country_noc") \
-        .agg(
-            round(avg("weight"), 2).alias("avg_weight"),  # Округлення середньої ваги
-            round(avg("height"), 2).alias("avg_height"),  # Округлення середнього зросту
-            stddev("weight").alias("stddev_weight"),
-            stddev("height").alias("stddev_height")
-        ) \
-        .withColumn("timestamp", current_timestamp())
+    .agg(
+        round(avg("weight"), 2).alias("avg_weight"),  # Округлення середньої ваги
+        round(avg("height"), 2).alias("avg_height"),  # Округлення середнього зросту
+        round(stddev("weight"), 2).alias("stddev_weight"),  # Округлення стандартного відхилення ваги
+        round(stddev("height"), 2).alias("stddev_height")   # Округлення стандартного відхилення зросту
+    ) \
+    .withColumn("timestamp", current_timestamp())
 
     # Фільтрація потенційних аномалій за стандартним відхиленням
     filtered_stats = avg_stats.filter(

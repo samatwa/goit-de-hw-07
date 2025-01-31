@@ -39,7 +39,7 @@ def process_table(spark, table_name):
     
     # Логування попереднього перегляду
     logger.info(f"Data preview after cleaning for {table_name}:")
-    df.show(5)  # Показати перші 5 рядків
+    df.show(20)  
     
     # Запис очищених даних у Parquet у папку silver
     silver_path = f"silver/{table_name}"
