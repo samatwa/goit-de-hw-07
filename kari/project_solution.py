@@ -38,6 +38,8 @@ bronze_to_silver = SparkSubmitOperator(
 silver_to_gold = SparkSubmitOperator(
     task_id="silver_to_gold", 
     application="/opt/airflow/dags/kari/silver_to_gold.py",  
+    master="spark://217.61.58.159:7077",  # Use the same Spark standalone cluster URL
+    deploy_mode="client",
     verbose=1,  
     dag=dag,
 )
