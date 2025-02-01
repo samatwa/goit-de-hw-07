@@ -10,7 +10,8 @@ from airflow.providers.apache.spark.operators.spark_submit import SparkSubmitOpe
 
 default_args = {
     'owner': 'airflow',
-    'start_date': datetime(2025, 1, 1)
+    'start_date': datetime(2024, 1, 1),
+    'retries': 0
 }
 
 connection_id = 'spark-default'  # назва Spark Connection у Airflow
