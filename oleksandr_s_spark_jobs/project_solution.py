@@ -20,7 +20,7 @@ with DAG(
     default_args=default_args,
     schedule_interval=None,  # або cron-розклад для регулярного запуску
     catchup=False,
-    tags=["oleksandr_s"]
+    tags=['oleksandr_s']
 ) as dag:
 
     # 1. landing_to_bronze
