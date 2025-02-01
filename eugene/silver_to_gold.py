@@ -1,5 +1,5 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import avg, current_timestamp, col, stddev, lit, round
+from pyspark.sql.functions import avg, current_timestamp, col, round
 from pyspark.sql.types import StructType, StructField, StringType, DoubleType
 import logging
 
@@ -33,34 +33,24 @@ if __name__ == "__main__":
     # Вибір колонок з athlete_bio
     bio_selected = bio_df.select("athlete_id", "sex", "country_noc", "weight", "height")
 
-    # Об'єднання датафреймів і фільтрація індивідуальних аномалій
+    # Об'єднання датафреймів
     joined_df = bio_selected.join(results_selected, on="athlete_id", how="inner") \
-        .filter((col("weight").isNotNull()) & (col("height").isNotNull())) \
-        .filter((col("weight") > 30) & (col("weight") < 500) &  # Логічний діапазон для ваги
-                (col("height") > 100) & (col("height") < 300))  # Логічний діапазон для зросту
+        .filter((col("weight").isNotNull()) & (col("height").isNotNull()))
 
     # Групування та обчислення середніх значень
     avg_stats = joined_df.groupBy("sport", "medal", "sex", "country_noc") \
     .agg(
         round(avg("weight"), 2).alias("avg_weight"),  # Округлення середньої ваги
-        round(avg("height"), 2).alias("avg_height"),  # Округлення середнього зросту
-        round(stddev("weight"), 2).alias("stddev_weight"),  # Округлення стандартного відхилення ваги
-        round(stddev("height"), 2).alias("stddev_height")   # Округлення стандартного відхилення зросту
+        round(avg("height"), 2).alias("avg_height")   # Округлення середнього зросту
     ) \
     .withColumn("timestamp", current_timestamp())
 
-    # Фільтрація потенційних аномалій за стандартним відхиленням
-    filtered_stats = avg_stats.filter(
-        (col("stddev_weight") < lit(50)) &  # Відсіювання великих відхилень у вазі
-        (col("stddev_height") < lit(30))    # Те ж саме для зросту
-    )
-
     # Логування результатів
     logger.info("Final aggregated data preview:")
-    filtered_stats.show()
+    avg_stats.show()
 
     # Запис результатів з оптимізацією партицій
-    filtered_stats.repartition("sport", "medal").write.parquet("gold/avg_stats", mode="overwrite")
+    avg_stats.repartition("sport", "medal").write.parquet("gold/avg_stats", mode="overwrite")
 
     # Завершення сесії
     spark.stop()
