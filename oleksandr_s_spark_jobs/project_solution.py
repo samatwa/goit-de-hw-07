@@ -1,9 +1,3 @@
-"""
-project_solution.py
-DAG, що послідовно запускає landing_to_bronze.py,
-bronze_to_silver.py, silver_to_gold.py
-"""
-
 from datetime import datetime
 from airflow import DAG
 from airflow.providers.apache.spark.operators.spark_submit import SparkSubmitOperator
