@@ -12,7 +12,7 @@ default_args = {
 }
 
 with DAG(
-    'test_dummy_dag_4',
+    'test_dummy_dag_5',
     default_args=default_args,
     description='Тестовий DAG, який нічого не робить',
     schedule_interval=None,  # Виконання тільки вручну
