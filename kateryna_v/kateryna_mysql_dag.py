@@ -3,6 +3,7 @@ from datetime import datetime
 from airflow.sensors.sql import SqlSensor
 from airflow.operators.mysql_operator import MySqlOperator
 from airflow.operators.python import PythonOperator, BranchPythonOperator
+from airflow.hooks.mysql_hook import MySqlHook
 from airflow.utils.trigger_rule import TriggerRule as tr
 import random
 import time
@@ -10,14 +11,12 @@ import logging
 
 log = logging.getLogger(__name__)
 
-# Функція для випадкового вибору медалі
 def pick_medal(ti):
     medal = random.choice(['Bronze', 'Silver', 'Gold'])
     log.info(f"Selected medal: {medal}")
     ti.xcom_push(key='medal_type', value=medal)
     return medal
 
-# Функція для обчислення кількості медалей
 def calc_medal_count(medal_type):
     return f"""
     INSERT INTO olympic_medals (medal_type, count, created_at)
@@ -26,22 +25,28 @@ def calc_medal_count(medal_type):
     WHERE medal = '{medal_type}';
     """
 
-# Функція для затримки
 def generate_delay():
     log.info("Starting delay...")
     time.sleep(35)
     log.info("Delay finished.")
 
-# Аргументи за замовчуванням для DAG
+def fetch_medals():
+    mysql_hook = MySqlHook(mysql_conn_id=connection_name)
+    records = mysql_hook.get_records("SELECT * FROM olympic_medals;")
+    log.info(f"Medal records: {records}")
+
+def branch_task(ti):
+    medal_type = ti.xcom_pull(task_ids='pick_medal', key='medal_type')
+    log.info(f"Branching to task: calc_{medal_type.lower()}")
+    return f'calc_{medal_type.lower()}'
+
 default_args = {
     'owner': 'airflow',
     'start_date': datetime(2024, 8, 4, 0, 0),
 }
 
-# Назва з'єднання з MySQL
 connection_name = "goit_mysql_db_kv"
 
-# Визначення DAG
 with DAG(
         'working_with_mysql_db_kv',
         default_args=default_args,
@@ -67,11 +72,6 @@ with DAG(
         task_id='pick_medal',
         python_callable=pick_medal,
     )
-
-    def branch_task(ti):
-        medal_type = ti.xcom_pull(task_ids='pick_medal', key='medal_type')
-        log.info(f"Branching to task: calc_{medal_type.lower()}")
-        return f'calc_{medal_type.lower()}'
 
     branch_task = BranchPythonOperator(
         task_id='branch_task',
@@ -116,9 +116,12 @@ with DAG(
         poke_interval=5,
     )
 
+    fetch_medals_task = PythonOperator(
+        task_id='fetch_medals',
+        python_callable=fetch_medals,
+        trigger_rule=tr.ALL_DONE
+    )
+
     create_table >> pick_medal_task >> branch_task
     branch_task >> [calc_bronze, calc_silver, calc_gold]
-    [calc_bronze, calc_silver, calc_gold] >> delay_task >> check_for_correctness
-
-
-
+    [calc_bronze, calc_silver, calc_gold] >> delay_task >> check_for_correctness >> fetch_medals_task
