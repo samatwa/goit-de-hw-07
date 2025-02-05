@@ -110,7 +110,7 @@ with DAG(
         conn_id=connection_name,
         sql="""
         SELECT COUNT(*) FROM olympic_medals 
-        WHERE created_at >= NOW() - INTERVAL 30 SECOND;
+        WHERE created_at >= NOW() - INTERVAL 1 MINUTE;
         """,
         timeout=60,
         poke_interval=5,
@@ -120,5 +120,5 @@ with DAG(
     branch_task >> [calc_bronze, calc_silver, calc_gold]
     [calc_bronze, calc_silver, calc_gold] >> delay_task >> check_for_correctness
 
-    
+
 
