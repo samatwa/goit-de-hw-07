@@ -112,7 +112,7 @@ with DAG(
         SELECT COUNT(*) FROM kateryna_v_olympic_medals 
         WHERE created_at >= NOW() - INTERVAL 30 SECOND;
         """,
-        timeout=60,
+        timeout=30,
         poke_interval=5,
     )
 
