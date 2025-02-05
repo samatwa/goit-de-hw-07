@@ -110,9 +110,9 @@ with DAG(
         conn_id=connection_name,
         sql="""
         SELECT COUNT(*) FROM kateryna_v_olympic_medals 
-        WHERE created_at >= NOW() - INTERVAL 30 SECOND;
+        WHERE created_at >= NOW() - INTERVAL 60 SECOND;
         """,
-        timeout=30,
+        timeout=60,
         poke_interval=5,
     )
 
