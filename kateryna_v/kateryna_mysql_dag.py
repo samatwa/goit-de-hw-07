@@ -65,9 +65,14 @@ with DAG(
     )
 
     # 3. Розгалуження завдань
+    def branch_task(ti):
+        medal_type = ti.xcom_pull(task_ids='pick_medal', key='medal_type')
+        return f'calc_{medal_type.lower()}'
+
     branch_task = BranchPythonOperator(
         task_id='branch_task',
-        python_callable=lambda ti: ti.xcom_pull(task_ids='pick_medal', key='medal_type'),
+        python_callable=branch_task,
+        provide_context=True,
     )
 
     # 4. Завдання для кожного типу медалі
