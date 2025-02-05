@@ -6,10 +6,14 @@ from airflow.operators.python import PythonOperator, BranchPythonOperator
 from airflow.utils.trigger_rule import TriggerRule as tr
 import random
 import time
+import logging
+
+log = logging.getLogger(__name__)
 
 # Функція для випадкового вибору медалі
 def pick_medal(ti):
     medal = random.choice(['Bronze', 'Silver', 'Gold'])
+    log.info(f"Selected medal: {medal}")
     ti.xcom_push(key='medal_type', value=medal)
     return medal
 
@@ -17,14 +21,16 @@ def pick_medal(ti):
 def calc_medal_count(medal_type):
     return f"""
     INSERT INTO olympic_medals (medal_type, count, created_at)
-    SELECT '{medal_type}', COUNT(*) AS count, NOW()
+    SELECT '{medal_type}', COUNT(*), NOW()
     FROM olympic_dataset.athlete_event_results
-    WHERE medal = '{medal_type}'
+    WHERE medal = '{medal_type}';
     """
 
 # Функція для затримки
 def generate_delay():
+    log.info("Starting delay...")
     time.sleep(35)
+    log.info("Delay finished.")
 
 # Аргументи за замовчуванням для DAG
 default_args = {
@@ -32,19 +38,18 @@ default_args = {
     'start_date': datetime(2024, 8, 4, 0, 0),
 }
 
-# Назва з'єднання з базою даних MySQL
+# Назва з'єднання з MySQL
 connection_name = "goit_mysql_db_kv"
 
 # Визначення DAG
 with DAG(
         'working_with_mysql_db_kv',
         default_args=default_args,
-        schedule_interval=None,  # DAG не має запланованого інтервалу виконання
-        catchup=False,  # Вимкнути запуск пропущених задач
-        tags=["kateryna_v"]  # Теги для класифікації DAG
+        schedule_interval=None,
+        catchup=False,
+        tags=["kateryna_v"]
 ) as dag:
-
-    # 1. Створення таблиці
+    
     create_table = MySqlOperator(
         task_id='create_table',
         mysql_conn_id=connection_name,
@@ -58,24 +63,21 @@ with DAG(
         """
     )
 
-    # 2. Випадковий вибір медалі
     pick_medal_task = PythonOperator(
         task_id='pick_medal',
         python_callable=pick_medal,
     )
 
-    # 3. Розгалуження завдань
     def branch_task(ti):
         medal_type = ti.xcom_pull(task_ids='pick_medal', key='medal_type')
+        log.info(f"Branching to task: calc_{medal_type.lower()}")
         return f'calc_{medal_type.lower()}'
 
     branch_task = BranchPythonOperator(
         task_id='branch_task',
         python_callable=branch_task,
-        provide_context=True,
     )
 
-    # 4. Завдання для кожного типу медалі
     calc_bronze = MySqlOperator(
         task_id='calc_bronze',
         mysql_conn_id=connection_name,
@@ -97,24 +99,26 @@ with DAG(
         trigger_rule=tr.NONE_FAILED
     )
 
-    # 5. Затримка
     delay_task = PythonOperator(
         task_id='generate_delay',
         python_callable=generate_delay,
         trigger_rule=tr.ONE_SUCCESS
     )
 
-    # 6. Сенсор для перевірки запису
     check_for_correctness = SqlSensor(
         task_id='check_for_correctness',
         conn_id=connection_name,
-        sql="SELECT COUNT(*) FROM olympic_medals WHERE created_at >= NOW() - INTERVAL 30 SECOND",
+        sql="""
+        SELECT COUNT(*) FROM olympic_medals 
+        WHERE created_at >= NOW() - INTERVAL 30 SECOND;
+        """,
         timeout=60,
         poke_interval=5,
     )
 
-    # Встановлення залежностей між завданнями
     create_table >> pick_medal_task >> branch_task
     branch_task >> [calc_bronze, calc_silver, calc_gold]
     [calc_bronze, calc_silver, calc_gold] >> delay_task >> check_for_correctness
+
+    
 
