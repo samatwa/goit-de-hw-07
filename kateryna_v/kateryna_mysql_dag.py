@@ -37,11 +37,11 @@ connection_name = "goit_mysql_db_kv"
 
 # Визначення DAG
 with DAG(
-        'working_with_mysql_db_v',
+        'working_with_mysql_db_kv',
         default_args=default_args,
         schedule_interval=None,  # DAG не має запланованого інтервалу виконання
         catchup=False,  # Вимкнути запуск пропущених задач
-        tags=["veronika_y"]  # Теги для класифікації DAG
+        tags=["kateryna_v"]  # Теги для класифікації DAG
 ) as dag:
 
     # 1. Створення таблиці
@@ -113,4 +113,3 @@ with DAG(
     branch_task >> [calc_bronze, calc_silver, calc_gold]
     [calc_bronze, calc_silver, calc_gold] >> delay_task >> check_for_correctness
 
-    
