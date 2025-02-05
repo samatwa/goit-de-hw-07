@@ -19,7 +19,7 @@ def pick_medal(ti):
 
 def calc_medal_count(medal_type):
     return f"""
-    INSERT INTO olympic_medals (medal_type, count, created_at)
+    INSERT INTO kateryna_v_olympic_medals (medal_type, count, created_at)
     SELECT '{medal_type}', COUNT(*), NOW()
     FROM olympic_dataset.athlete_event_results
     WHERE medal = '{medal_type}';
@@ -59,7 +59,7 @@ with DAG(
         task_id='create_table',
         mysql_conn_id=connection_name,
         sql="""
-        CREATE TABLE IF NOT EXISTS olympic_medals (
+        CREATE TABLE IF NOT EXISTS kateryna_v_olympic_medals (
             id INT AUTO_INCREMENT PRIMARY KEY,
             medal_type VARCHAR(10),
             count INT,
@@ -109,7 +109,7 @@ with DAG(
         task_id='check_for_correctness',
         conn_id=connection_name,
         sql="""
-        SELECT COUNT(*) FROM olympic_medals 
+        SELECT COUNT(*) FROM kateryna_v_olympic_medals 
         WHERE created_at >= NOW() - INTERVAL 1 MINUTE;
         """,
         timeout=60,
@@ -124,4 +124,7 @@ with DAG(
 
     create_table >> pick_medal_task >> branch_task
     branch_task >> [calc_bronze, calc_silver, calc_gold]
-    [calc_bronze, calc_silver, calc_gold] >> delay_task >> check_for_correctness >> fetch_medals_task
+    [calc_bronze, calc_silver, calc_gold] >> delay_task >> check_for_correctness
+
+
+
