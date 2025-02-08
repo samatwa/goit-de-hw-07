@@ -39,6 +39,13 @@ git remote set-url origin https://<TOKEN>@github.com/goitacademy/airflow_sandbox
     
     - `file_name` — назва вашого файлу.
     - `public_key.pem` — ключ, що додається до репозиторію.
+
+
+Or with **PowerShell**
+```PowerShell
+.\encrypt_and_archive.ps1 -InputFile "path_to_file" -PublicKey "path_to_public_key.pem"
+```
+
 3. У результаті буде створено зашифрований архів із назвою `file_name_tar.gz`.
     
 4. **Перемістіть зашифрований файл до папки `encrypted_file`:**
