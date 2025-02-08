@@ -64,7 +64,7 @@ mv file_name_tar.gz encrypted_file/
 1. Додаємо всі зміни до `staging area`:
     
 ```bash
-git add .
+git add encrypted_file/
 ```
     
 2. Створюємо коміт із описом внесених змін:
