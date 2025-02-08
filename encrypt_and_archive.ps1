@@ -17,7 +17,7 @@ New-Item -ItemType Directory -Force -Path $TempDir | Out-Null
 
 # Крок 1: Архівування файлу з іменем архіву, що відповідає імені файлу
 Write-Output "Архівування файлу $InputFile у $ArchiveName..."
-Compress-Archive -Path $InputFile -DestinationPath $ArchiveName
+& tar -czf $ArchiveName $InputFile
 
 # Крок 2: Розбиваємо архів на частини по $PartSize байтів
 Write-Output "Розбиваємо архів на частини по $PartSize байтів..."
@@ -42,14 +42,14 @@ foreach ($part in Get-ChildItem -Path $TempDir -Filter "part_*") {
     Remove-Item $part.FullName  # Видаляємо нешифровану частину після шифрування
 }
 
-# Крок 4: Архівуємо всі зашифровані частини в один архів
+# Крок 4: Архівуємо всі зашифровані частини в один архів формату .tar.gz
 Write-Output "Створення фінального архіву з зашифрованими частинами..."
-Compress-Archive -Path "$TempDir\*.enc" -DestinationPath "${BaseName}_encrypted_parts.zip"
+& tar -czf "${BaseName}_encrypted_parts.tar.gz" -C $TempDir .
 
 # Крок 5: Очищення тимчасових файлів
 Write-Output "Очищення тимчасових файлів..."
 Remove-Item -Recurse -Force $TempDir
 Remove-Item $ArchiveName
 
-Write-Output "Шифрування завершено. Фінальний архів: ${BaseName}_encrypted_parts.zip"
+Write-Output "Шифрування завершено. Фінальний архів: ${BaseName}_encrypted_parts.tar.gz"
 
