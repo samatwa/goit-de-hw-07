@@ -23,7 +23,7 @@ dag = DAG(
 landing_to_bronze_task = SparkSubmitOperator(
     application='dags/kateryna_v/landing_to_bronze.py',
     task_id='landing_to_bronze',
-    conn_id='spark_default',
+    conn_id='spark-default',
     verbose=1,
     dag=dag,
 )
@@ -31,7 +31,7 @@ landing_to_bronze_task = SparkSubmitOperator(
 bronze_to_silver_task = SparkSubmitOperator(
     application='dags/kateryna_v/bronze_to_silver.py',
     task_id='bronze_to_silver',
-    conn_id='spark_default',
+    conn_id='spark-default',
     verbose=1,
     dag=dag,
 )
@@ -39,7 +39,7 @@ bronze_to_silver_task = SparkSubmitOperator(
 silver_to_gold_task = SparkSubmitOperator(
     application='dags/kateryna_v/silver_to_gold.py',
     task_id='silver_to_gold',
-    conn_id='spark_default',
+    conn_id='spark-default',
     verbose=1,
     dag=dag,
 )
