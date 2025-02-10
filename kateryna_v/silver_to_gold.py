@@ -16,11 +16,11 @@ if __name__ == "__main__":
     joined_df = joined_df.select(
         athlete_bio_df["athlete_id"],
         athlete_bio_df["sex"],
-        athlete_bio_df["country_noc"],  # Використовуємо country_noc з athlete_bio_df
+        athlete_bio_df["country_noc"],
         athlete_event_results_df["sport"],
         athlete_event_results_df["medal"],
-        athlete_bio_df["weight"],  # Використовуємо weight з athlete_bio_df
-        athlete_bio_df["height"]   # Використовуємо height з athlete_bio_df
+        athlete_bio_df["weight"],
+        athlete_bio_df["height"]
     )
 
     # Видалення рядків з null-значеннями у важливих колонках
@@ -28,7 +28,7 @@ if __name__ == "__main__":
 
     # Обчислення середніх значень
     avg_stats_df = joined_df.groupBy("sport", "medal", "sex", "country_noc") \
-        .agg(
+ .agg(
             avg("weight").alias("average_weight"),
             avg("height").alias("average_height"),
             current_timestamp().alias("timestamp")

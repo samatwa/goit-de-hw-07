@@ -1,5 +1,5 @@
 from airflow import DAG
-from airflow.providers.apache.spark.operators.spark_submit import SparkSubmitOperator
+from airflow.operators.bash import BashOperator
 from datetime import datetime, timedelta
 
 # Параметри за замовчуванням для DAG
@@ -20,27 +20,21 @@ dag = DAG(
 )
 
 # Завдання для кожного етапу
-landing_to_bronze_task = SparkSubmitOperator(
-    application='dags/kateryna_v/landing_to_bronze.py',
+landing_to_bronze_task = BashOperator(
     task_id='landing_to_bronze',
-    conn_id='spark-default',
-    verbose=1,
+    bash_command='python /path/to/your/dags/landing_to_bronze.py',
     dag=dag,
 )
 
-bronze_to_silver_task = SparkSubmitOperator(
-    application='dags/kateryna_v/bronze_to_silver.py',
+bronze_to_silver_task = BashOperator(
     task_id='bronze_to_silver',
-    conn_id='spark-default',
-    verbose=1,
+    bash_command='python /path/to/your/dags/bronze_to_silver.py',
     dag=dag,
 )
 
-silver_to_gold_task = SparkSubmitOperator(
-    application='dags/kateryna_v/silver_to_gold.py',
+silver_to_gold_task = BashOperator(
     task_id='silver_to_gold',
-    conn_id='spark-default',
-    verbose=1,
+    bash_command='python /path/to/your/dags/silver_to_gold.py',
     dag=dag,
 )
 
