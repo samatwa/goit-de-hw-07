@@ -2,17 +2,29 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import avg, current_timestamp
 import os
 
-# Створення Spark сесії для перетворення даних із silver у gold
+# Створення Spark сесії
 spark = SparkSession.builder.appName("SilverToGold").getOrCreate()
 
-# Зчитування даних з рівня silver
-athlete_bio_df = spark.read.parquet("silver/athlete_bio")
-athlete_event_results_df = spark.read.parquet("silver/athlete_event_results")
+# Читаємо дані
+silver_path_bio = "silver/athlete_bio"
+silver_path_results = "silver/athlete_event_results"
 
-# Виконання join за ключем athlete_id
+if not os.path.exists(silver_path_bio) or not os.path.exists(silver_path_results):
+    raise FileNotFoundError("❌ One or more input files are missing in the 'silver' directory.")
+
+athlete_bio_df = spark.read.parquet(silver_path_bio)
+athlete_event_results_df = spark.read.parquet(silver_path_results)
+
+# Видаляємо дубльовану колонку перед join
+athlete_bio_df = athlete_bio_df.drop("country_noc")
+
+# Виконуємо join
 joined_df = athlete_event_results_df.join(athlete_bio_df, "athlete_id")
 
-# Групування за sport, medal, sex, country_noc та обчислення середніх значень weight і height
+# Видаляємо NULL у height і weight
+joined_df = joined_df.dropna(subset=["height", "weight"])
+
+# Групування
 agg_df = (joined_df.groupBy("sport", "medal", "sex", "country_noc")
           .agg(
               avg("height").alias("avg_height"),
@@ -21,16 +33,14 @@ agg_df = (joined_df.groupBy("sport", "medal", "sex", "country_noc")
           )
 )
 
-# Створення директорії для gold (якщо не існує)
+# Запис результату
 output_path = "gold/avg_stats"
-os.makedirs(output_path, exist_ok=True)
-
-# Запис результатів у Parquet формат
 agg_df.write.mode("overwrite").parquet(output_path)
-print(f"Successfully processed data and saved to {output_path}")
+print(f"✅ Successfully processed data and saved to {output_path}")
 
-# Вивід фінального DataFrame для перевірки
+# Вивід перших 10 записів
 df_final = spark.read.parquet(output_path)
-df_final.show(truncate=False)
+df_final.show(10, truncate=True)
 
+# Завершуємо сесію
 spark.stop()
