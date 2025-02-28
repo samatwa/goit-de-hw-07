@@ -17,21 +17,21 @@ with DAG(
 ) as dag:
     landing_to_bronze = SparkSubmitOperator(
         task_id='landing_to_bronze',
-        application='dags/nvi_spark_jobs/2_01_landing_to_bronze.py',  # Змініть шлях за потребою
+        application='dags/nvi_fp_dags_v6/nvi_spark_jobs/2_01_landing_to_bronze.py',  # Змініть шлях за потребою
         conn_id='spark-default',
         verbose=1,
     )
 
     bronze_to_silver = SparkSubmitOperator(
         task_id='bronze_to_silver',
-        application='dags/nvi_spark_jobs/2_02_bronze_to_silver.py',  # Змініть шлях за потребою
+        application='dags/nvi_fp_dags_v6/nvi_spark_jobs/2_02_bronze_to_silver.py',  # Змініть шлях за потребою
         conn_id='spark-default',
         verbose=1,
     )
 
     silver_to_gold = SparkSubmitOperator(
         task_id='silver_to_gold',
-        application='dags/nvi_spark_jobs/2_03_silver_to_gold.py',  # Змініть шлях за потребою
+        application='dags/nvi_fp_dags_v6/nvi_spark_jobs/2_03_silver_to_gold.py',  # Змініть шлях за потребою
         conn_id='spark-default',
         verbose=1,
     )
