@@ -44,3 +44,5 @@ rm "$ARCHIVE_NAME"
 
 echo "Шифрування завершено. Фінальний архів: ${BASENAME}_encrypted_parts.tar.gz"
 
+cp ${BASENAME}_encrypted_parts.tar.gz ./encrypted_file/${BASENAME}_encrypted_parts.tar.gz
+
