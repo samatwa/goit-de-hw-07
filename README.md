@@ -15,3 +15,6 @@
   * Запис у таблиці viacheslav.medal_results був не старший за 30 секунд
   * time.sleep(10) відпрацював
   * SqlSensor встиг перевірити свіже значення і повернув True
+
+# 3. MySQL Workbench
+![alt text](./ScreenShots/mysql_workbench.png)  
